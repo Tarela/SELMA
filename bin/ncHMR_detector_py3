@@ -1,0 +1,218 @@
+#!/usr/bin/env python
+# Time-stamp: <2019-01-03 12:08:55 Shengen Hu>
+ 
+"""Description: software package for "ncHMR detector: a computational framework to systematically reveal non-classical functions of histone-modification regulators"
+Copyright (c) 2019 Shengen Hu <tarelahu@gmail.com>
+This code is free software; you can redistribute it and/or modify it
+under the terms of the BSD License (see the file COPYING included with
+the distribution).
+@status: release candidate
+@version: $Id$
+@author:  Shengen Hu
+@contact: tarelahu@gmail.com
+"""
+
+# ------------------------------------
+# python modules
+# ------------------------------------
+
+import os
+import sys
+import time
+import string
+from optparse import OptionParser
+import subprocess
+import time
+# ------------------------------------
+# own python modules
+# ------------------------------------
+import HMRpipe
+
+### tool function
+from HMRpipe.Utility      import          (sp,
+                                   pdf_name,
+                                   raise_error,
+                                   wlog,
+                                   readAnnotation,
+                                   textformat,
+                                   CMD
+                                   )
+### read and generate config file
+#from HMRpipe.parse_config import (gen_conf,
+#                                   read_conf,
+#                                   make_conf
+#                                   )     
+
+                                   
+# -------------------
+# main step
+# -------------------
+from HMRpipe.step0_check_data   import step0_check_data
+from HMRpipe.step1_generate_matrix         import step1_generate_matrix
+from HMRpipe.step2_NC_detection    import step2_NC_detection
+from HMRpipe.step3_summary import step3_summary
+
+# ------------------------------------
+# Misc functions
+# ------------------------------------
+
+def main():
+    '''
+    Read parameter 
+    '''
+    usage = "%prog -p HMRpeak.bed -s HMsig.bw -f peakFolder -o outputname"
+    description = """ncHMR detector: a computational framework to systematically reveal non-classical functions of histone-modification regulators"""
+
+    optparser = OptionParser(version="%prog initver",description=description,usage=usage,add_help_option=False)
+    optparser.add_option("-h","--help",action="help",help="Show this help message and exit.")
+
+#========major options=============
+    optparser.add_option("-p","--HMRpeak",dest="HMRpeak",type="str",
+                         help = "Peak file for genome-wide HMR binding sites (bed format, at least 3 column)")
+    optparser.add_option("-s","--Signal",dest="signal",type="str",
+                         help="Signal track for genome-wide HM substrate signal (bigwig format), comma separated for multiple HM substrate (each substrate accept ONLY 1 bw file)")
+    optparser.add_option("-f","--Folder",dest="Folder",type="str",
+                         help="Folder for peak files of potential cofactors, ABSOLUTE path")
+    optparser.add_option("-o","--outname",dest="outname",type="str",default = "NA",
+                         help="Name (prefix) of output results and output directory, default is NA")
+    optparser.add_option("-m","--mode",dest="mode",type="choice",choices=["binary","signal"],default="binary",
+                         help="Different mode of ncHMR_detector, choose from binary(default) and signal. Binary mode takes peaks.bed files of cofactor candidates while signal mode takes signaltrack.bw files. Make sure the files for cofactor candidates (in the directory specified by -b/--bwfolder) end with '.bw'(for signal mode)")
+    optparser.add_option("-b","--bwfolder",dest="bwfolder",type="str",
+                         help="(specify this parameter when using signal mode) Folder for cofactor bw signal tracks. Only take effect in signal (-m signal). Input the ABSOLUTE directory of bw files with this parameter, in order to use the signal of cofactors to predict the non-calssical function instead of peak overlap. Note that the files in the bwfolder should end with .bw and have the same name as the one in peak folder.")
+
+    optparser.add_option("--extend",dest="ext",type="int",default=1000,
+                         help="[optional] length of peak region to consider HM signal, default is +/- 1000bp from each HMR peak center. For broad histone marks (H3K9me/H3K27me/H3K36me), +/- 5000bp are recommended.")
+    optparser.add_option("--Pvalue",dest="Pvalue",type="float",default=1e-3,
+                         help="[optional] Cutoff of P-value, default is 1e-3 (0.001)")
+    optparser.add_option("--Alpha",dest="Alpha",type="float",default="0.5",
+                         help="[optional] alpha parameters for elasticNet, choose from 0~1, 1 for lasso and 0 for ridge, default is 0.5")
+    optparser.add_option("--LambdaChoice",dest="LambdaChoice",type="choice",choices=["1se","min"],default = "1se",
+                         help="[optional] Solution to determine Lambda (choose from 1se and min, default is 1se)")
+    optparser.add_option("--TopNcofactors",dest="TopNcofactors",type="str",default="all",
+                         help="[optional] TopN predicted cofactors with highest association with non-classic function is reported (choose any number or all(default) to report topN predicted cofactors that pass the thresholds)")
+    optparser.add_option("--Rsquare",dest="Rcutoff",type="float",default=0.1,
+                         help="[optional] Cutoff of Rsquare in uni-variate linear regression step, choose from 0~1, default is 0.1. The suggested Rsquare cutoff for mode:signal is 0.05.")
+
+    optparser.add_option("--overwrite",dest='fover',  default=False, action='store_true', 
+                         help = "[optional] force overwrite, this cmd will rm existing result if set !! " )
+
+    (options,args) = optparser.parse_args()
+
+    if not options.HMRpeak:
+        optparser.print_help()
+        print('Peak file for HMR binding sites (-p/--HMRpeak) is required')
+        sys.exit(1)
+
+    if not options.signal:
+        optparser.print_help()
+        print('Signal track (-s/--Signal) is required')
+        sys.exit(1)
+
+    if not options.Folder:
+        optparser.print_help()
+        print('Folder for cofactor peak files (-f/--Folder) is required')
+        sys.exit(1)
+
+    conf_dict = {}
+    conf_dict['General'] = {}
+    conf_dict['options'] = {}
+
+    conf_dict['General']['HMRpeak'] = options.HMRpeak
+    conf_dict['General']['signal'] = options.signal.split(",")
+    conf_dict['General']['peakFolder'] = options.Folder
+    conf_dict['General']['outname'] = options.outname
+    conf_dict['General']['bwfolder'] = options.bwfolder
+    conf_dict['General']['mode'] = options.mode
+
+    conf_dict['options']['Pvalue'] = options.Pvalue
+    conf_dict['options']['Alpha'] = options.Alpha
+    conf_dict['options']['Lambda'] = options.LambdaChoice
+    conf_dict['options']['TopNcofactors'] = options.TopNcofactors
+    conf_dict['options']['ext'] = options.ext
+    conf_dict['options']['Rcutoff'] = options.Rcutoff
+    ### read raw path of output dir, the startdir will be used when the input file is not in absolute path
+    conf_dict['General']['startdir'] = os.getcwd()+'/'
+
+    ### check parameters: 
+    if "~" in conf_dict['General']['outname']:
+        print('ERROR: ~ cannot appeared in outname, current outname is %s'%(conf_dict['General']['outname']))
+        sys.exit(1)
+    if "/" in conf_dict['General']['outname']:
+        print('ERROR: / cannot appeared in outname, current outname is %s'%(conf_dict['General']['outname']))
+        sys.exit(1)
+    
+        if not args.fover:
+            print('ERROR: name of your output dir is exist as a dir, ncHMR_detector exit because overwrite function is turned off, you can add -f parameter to turn on overwite function')
+            sys.exit(1)
+        else: 
+            print('name of your output dir is exist as a dir, overwrite is turned on, write output result in existing dir')
+    ### creat output dir
+    if os.path.isfile(conf_dict['General']['outname']):
+        print('ERROR: name of your output dir %s is exist as a file, cannot create a dir, exit'%(conf_dict['General']['outname']))
+        sys.exit(1)
+    elif os.path.isdir(conf_dict['General']['outname']):
+        if not options.fover:
+            print('ERROR: name of your output dir is exist as a dir, exit because overwrite function is turned off, you can add --overwrite parameter to turn on overwite function')
+            sys.exit(1)
+        else: 
+            print('name of your output dir is exist as a dir, overwrite is turned on, write output result in existing dir')
+    else:
+        os.system("mkdir %s"%(conf_dict['General']['outname']))
+
+    ### move to output dir
+    os.chdir(conf_dict['General']['outname'])
+    ### specify the main progress log file
+    logfile = conf_dict['General']['outname']+'_progress.log'
+    ### remove existing log file. 
+    if os.path.isfile(logfile):
+        if options.fover:
+            CMD('rm %s'%logfile)
+            print('process log is printed into %s'%(logfile))
+        else:
+            logfile_orig = logfile
+            logfile += str(time.time())
+            print('process log is printed into %s, because %s exists and overwrite function is turned off'%(logfile,logfile_orig))
+    else:
+        print('process log is printed into %s'%(logfile))
+    ### Rscript location 
+    #CONFIG_TEMPLATE = os.path.join(Drseq_pipe.__path__[0], "Config/Drseq_template.conf")
+    #conf_dict['rscript'] = os.path.join(HMRpipe.__path__[0], "Rscript/")#'/mnt/Storage3/CR/Dropseq/drseq/Rscript/'
+    #conf_dict['clean'] = args.Clean
+        
+    ### main step for Dr.seq , see individual script for detail note.
+    # preparing step, integrate parameter, prepare for following step
+    wlog("Start ncHMR_detector",logfile)
+    wlog("Step0: check input Data and parameters",logfile)    
+    step0_check_data(conf_dict,logfile)
+    wlog('Step0 Data check DONE',logfile)
+    # main data processing step, including mapping, generate expression matrix and QC matrix which is used in next step
+    t = time.time()
+    wlog("Step1: pre-process and generate matrix",logfile)
+    step1_generate_matrix(conf_dict,logfile)
+    step1time = time.time() -t
+    wlog("Step1: pre-process and generate matrix DONE",logfile)
+    wlog("running time for Step1 : %s"%(step1time),logfile)
+    # QC step, including bulk RNAseq QC(option), individual cell QC
+    t = time.time()
+    wlog("Step2: non-classical function detection",logfile)
+    step2_NC_detection(conf_dict,logfile)
+    step2time = time.time()-t
+    wlog("Step2: non-classical function detection DONE",logfile)
+    wlog("running time for Step2: non-classical function detection: %s"%(step2time),logfile)
+    # summary step, integrate all QC figure and expression matrix, generate qC report with latex
+    t = time.time()
+    wlog('Step3: summary',logfile)
+    step3_summary(conf_dict,logfile)
+    step3time = time.time() -t
+    wlog("running time for Step3: Summary %s"%(step3time),logfile)
+
+
+
+if __name__== '__main__':
+    try:
+        main()
+
+    except KeyboardInterrupt:
+        sys.stderr.write("User interrupt me ^_^ \n")
+        sys.exit(0)
+
