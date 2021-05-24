@@ -42,8 +42,8 @@ SELMA require genome sequence (in .2bit format) prepared for running. You can do
 
 ## 3. Download pre-estimated DNaseI/Tn5 bias matrix
 With the help of SELMA, we've estiamted DNaseI/Tn5 bias using DNase-seq/ATAC-seq generated from naked DNA data. You can download them from the following link. 
-[DNaseI(DNase-seq)](https://www.dropbox.com/s/ncemdhp0cee3cic/DNase_SELMAbias_10mer.txt.gz?dl=0)
-[Tn5(ATAC-seq)](https://www.dropbox.com/s/x5iiy27ef80fl19/ATAC_SELMAbias_10mer.txt.gz?dl=0)
+- [DNaseI(DNase-seq)](https://www.dropbox.com/s/ncemdhp0cee3cic/DNase_SELMAbias_10mer.txt.gz?dl=0)
+- [Tn5(ATAC-seq)](https://www.dropbox.com/s/x5iiy27ef80fl19/ATAC_SELMAbias_10mer.txt.gz?dl=0)
 
 ## 4. Run SELMA (usage)
 #### Essential paramters
@@ -80,7 +80,7 @@ $ SELMA -m bulk -i ${path}/fragments.bed -g hg38 -f PE -o outputname -t ATAC -s 
 
 #### options
 You can also specify the following options for more accurate bias estimation and correction:
--   -\-extend=EXTEND         
+-   -\-extend=EXTEND    
 [optional]Extension size from the peak summits, default is +/- 200bp from each peak summit.
 -  -\-peakQval=PEAKQVAL
 [optional]Qvalue cutoff in macs3 peak calling, default is 0.01 (-q 0.01)
@@ -113,15 +113,17 @@ You can also specify the following options for more accurate bias estimation and
 
     \#Note: This pdf file is generated only if pdflatex is pre-installed. 
 
-2. `NAME_peaks.bed` is the peaks detected from the fragment files (with macs3). Each peak was extended to 400bp centered on the peak summit. 
+2. `NAME_bias.txt` is the bias matrix estimated with SELMA methods. This file will only be generated if the users don't use the --naked parameter (i.e. use mtDNA reads to estimate bias instead)
 
-3. `NAME_cleavage.bw` (bulk mode only) is the genome-wide profile of the 1bp cleavage of DNaseI/Tn5. Plus and minus strand cleavages will be separated to two files (cleavage_plus.bw, cleavage_minus.bw)
+3. `NAME_peaks.bed` is the peaks detected from the fragment files (with macs3). Each peak was extended to 400bp centered on the peak summit. 
 
-4. `NAME_biasExpected.bw` is the profile of the bias expected cleavage on the peak regions. Plus and minus strand cleavages will be separated to two files (biasExpected_plus.bw, biasExpected_minus.bw)
+4. `NAME_cleavage.bw` (bulk mode only) is the genome-wide profile of the 1bp cleavage of DNaseI/Tn5. Plus and minus strand cleavages will be separated to two files (cleavage_plus.bw, cleavage_minus.bw)
 
-5. `NAME_peakXcell.txt` (sc mode only) is the peak X cell count matrix generated from the single cell analysis. The cells were filtered by the total reads count (default >=10k reads) and the peaks were filtered based on the intrinsic cleavage bias (default top2/3 peaks with lowest bias effect). 
+5. `NAME_biasExpected.bw` is the profile of the bias expected cleavage on the peak regions. Plus and minus strand cleavages will be separated to two files (biasExpected_plus.bw, biasExpected_minus.bw)
 
-6. `NAME_scClustering.txt` (sc mode only) is the cell clustering results using SELMA debiased free peakset. )
+6. `NAME_peakXcell.txt` (sc mode only) is the peak X cell count matrix generated from the single cell analysis. The cells were filtered by the total reads count (default >=10k reads) and the peaks were filtered based on the intrinsic cleavage bias (default top2/3 peaks with lowest bias effect). 
+
+7. `NAME_scClustering.txt` (sc mode only) is the cell clustering results using SELMA debiased free peakset. )
 
 
 ## 6. Testing data and example of output files
