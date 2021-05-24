@@ -107,7 +107,7 @@ You can also specify the following options for more accurate bias estimation and
 [optional]Force overwrite, this cmd will rm existing result if set !!
 
 ## 5. Install and use published single cell clustering methods based on SELMA bias correction. 
-SELMA sc mode implements several well acknowledged cell clustering methods in the singlne cell clustering analysis. To activate these alternative methods (name, version and link listed below), users need to install the related package. 
+SELMA sc mode implements several well acknowledged cell clustering methods in the singlne cell clustering analysis. To activate these alternative methods (name, version and link listed below), users need to install the related package, and specify the method by the --clusterMethod parameter
 - [Seurat v4.0.0](https://satijalab.org/seurat/)
 - [APEC v1.2.2](https://github.com/QuKunLab/APEC)
 - [Cicero v1.8.1](https://www.bioconductor.org/packages/release/bioc/html/cicero.html)
