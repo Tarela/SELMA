@@ -23,113 +23,148 @@ import string
 from optparse import OptionParser
 import subprocess
 import time
+
 # ------------------------------------
 # own python modules
 # ------------------------------------
-import HMRpipe
+
+#import SELMA
 
 ### tool function
-from HMRpipe.Utility      import          (sp,
-                                   pdf_name,
-                                   raise_error,
-                                   wlog,
-                                   readAnnotation,
-                                   textformat,
-                                   CMD
-                                   )
-### read and generate config file
-#from HMRpipe.parse_config import (gen_conf,
-#                                   read_conf,
-#                                   make_conf
-#                                   )     
-
+#from SELMA.Utility      
+from Utility import (sp,
+                    pdf_name,
+                    raise_error,
+                    wlog,
+                    readAnnotation,
+                    textformat,
+                    CMD
+                    )
                                    
 # -------------------
 # main step
 # -------------------
-from HMRpipe.step0_check_data   import step0_check_data
-from HMRpipe.step1_generate_matrix         import step1_generate_matrix
-from HMRpipe.step2_NC_detection    import step2_NC_detection
-from HMRpipe.step3_summary import step3_summary
+
+from step0_check_data import step0_check_data
+from step1_QC_format import step1_QC_format
+from step2_biasMat import step2_biasMat
+from step3_callpeak import step3_callpeak
+from step4_BULKcleavageBias import step4_BULKcleavageBias
+#from step4_SCpeakbias import step4_SCpeakbias
+#from step5_SCpeakCellMat import step5_SCpeakCellMat
+#from step6_SCcellClustering import step6_SCcellClustering
+#from stepFinal_summary import stepFinal_summary
 
 # ------------------------------------
-# Misc functions
+# read in parameters
 # ------------------------------------
 
 def main():
     '''
     Read parameter 
     '''
-    usage = "%prog -p HMRpeak.bed -s HMsig.bw -f peakFolder -o outputname"
-    description = """ncHMR detector: a computational framework to systematically reveal non-classical functions of histone-modification regulators"""
+    usage = "%prog -i input_fragments.bed -f PE -t ATAC -o outname"
+    description = """SELMA: a computational framework for modeling intrinsic biases in chromatin accessibility sequencing data"""
 
-    optparser = OptionParser(version="%prog initver",description=description,usage=usage,add_help_option=False)
+    optparser = OptionParser(version="%prog 1.0",description=description,usage=usage,add_help_option=False)
     optparser.add_option("-h","--help",action="help",help="Show this help message and exit.")
 
 #========major options=============
-    optparser.add_option("-p","--HMRpeak",dest="HMRpeak",type="str",
-                         help = "Peak file for genome-wide HMR binding sites (bed format, at least 3 column)")
-    optparser.add_option("-s","--Signal",dest="signal",type="str",
-                         help="Signal track for genome-wide HM substrate signal (bigwig format), comma separated for multiple HM substrate (each substrate accept ONLY 1 bw file)")
-    optparser.add_option("-f","--Folder",dest="Folder",type="str",
-                         help="Folder for peak files of potential cofactors, ABSOLUTE path")
-    optparser.add_option("-o","--outname",dest="outname",type="str",default = "NA",
-                         help="Name (prefix) of output results and output directory, default is NA")
-    optparser.add_option("-m","--mode",dest="mode",type="choice",choices=["binary","signal"],default="binary",
-                         help="Different mode of ncHMR_detector, choose from binary(default) and signal. Binary mode takes peaks.bed files of cofactor candidates while signal mode takes signaltrack.bw files. Make sure the files for cofactor candidates (in the directory specified by -b/--bwfolder) end with '.bw'(for signal mode)")
-    optparser.add_option("-b","--bwfolder",dest="bwfolder",type="str",
-                         help="(specify this parameter when using signal mode) Folder for cofactor bw signal tracks. Only take effect in signal (-m signal). Input the ABSOLUTE directory of bw files with this parameter, in order to use the signal of cofactors to predict the non-calssical function instead of peak overlap. Note that the files in the bwfolder should end with .bw and have the same name as the one in peak folder.")
+    optparser.add_option("-m","--mode",dest="mode",type="choice",choices=("sc","bulk"),
+                             help = "[required] Mode of SELMA, choose from sc(single-cell) or bulk")
+    optparser.add_option("-i","--input_fragments", dest = 'fragments',type="str",
+                             help = "[required] Input fragments file in bed format, with .bed extension, for sc mode, the 4th(name) column of bed file represents the name of the corresponded individual cell" )
+    optparser.add_option("-f","--format",dest='format',type="choice",choices=("PE","SE"),default="PE",
+                             help = "[required] Format of the fragments.bed file. choose from PE(paired-end, default) or SE(single-end)" )
+    optparser.add_option("-t","--datatype",dest='datatype',type="choice",choices=("ATAC","DNase"),
+                             help = "[required] Type of sequencing data (experiments), choose from ATAC or DNase" )
+    optparser.add_option("-g","--genome",dest='genome',type="choice",choices=("hg38","mm10"),default="hg38",
+                             help = "[required] genome version of the input data, choose from hg38(default) and mm10" )
+    optparser.add_option("-s","--sequence",dest='sequence',type="str",
+                             help = "[required] genome sequence file in 2bit format" )
+    optparser.add_option("-o","--outname", dest="outname",type="str",
+                             help = "[required] Name of output results" )
 
-    optparser.add_option("--extend",dest="ext",type="int",default=1000,
-                         help="[optional] length of peak region to consider HM signal, default is +/- 1000bp from each HMR peak center. For broad histone marks (H3K9me/H3K27me/H3K36me), +/- 5000bp are recommended.")
-    optparser.add_option("--Pvalue",dest="Pvalue",type="float",default=1e-3,
-                         help="[optional] Cutoff of P-value, default is 1e-3 (0.001)")
-    optparser.add_option("--Alpha",dest="Alpha",type="float",default="0.5",
-                         help="[optional] alpha parameters for elasticNet, choose from 0~1, 1 for lasso and 0 for ridge, default is 0.5")
-    optparser.add_option("--LambdaChoice",dest="LambdaChoice",type="choice",choices=["1se","min"],default = "1se",
-                         help="[optional] Solution to determine Lambda (choose from 1se and min, default is 1se)")
-    optparser.add_option("--TopNcofactors",dest="TopNcofactors",type="str",default="all",
-                         help="[optional] TopN predicted cofactors with highest association with non-classic function is reported (choose any number or all(default) to report topN predicted cofactors that pass the thresholds)")
-    optparser.add_option("--Rsquare",dest="Rcutoff",type="float",default=0.1,
-                         help="[optional] Cutoff of Rsquare in uni-variate linear regression step, choose from 0~1, default is 0.1. The suggested Rsquare cutoff for mode:signal is 0.05.")
-
+#========minor options=============
+    optparser.add_option("--extend",dest="extend",type="int",default=200,
+                         help="[optional] Extension size from the peak summits, default is +/- 200bp from each peak summit.")
+    optparser.add_option("--peakQval",dest="peakqval",type="float",default=0.01,
+                         help="[optional] Qvalue cutoff in macs3 peak calling, default is 0.01 (-q 0.01)")
+    optparser.add_option("--bias",dest="bias",type="choice",default="naked",choices=("naked","chrM"),
+                         help="[optional] Methods of intrinsic cleavage bias estimation, choose from naked (default, use SELMA pre-estimated bias model from naked DNA data) or chrM (use cleavages on mtDNA to estimate bias)")
+    optparser.add_option("--kmer",dest="kmer",type="choice",default='10',choices=('6','8','10'),
+                         help="[optional] Length of K (K-mer length), choose from 6,8,and 10(default)")
+    optparser.add_option("--scATAC10x",dest="scATAC10x",default=False, action='store_true', 
+                         help="[sc optional] Turn on this parameter to use 10x scATAC mode, in which the data format is assume to be PE and the reads 5'end will be shift back to represent the cleavage sites  ")
+    optparser.add_option("--cellnames",dest="cellnames",type="str",
+                         help="[sc optional] Single column file for name list of used individual cells, each line contain the name of the individual cell. This parameter is only used for sc mode")
+    optparser.add_option("--readCutoff",dest="readcutoff",type="int",default=10000,
+                         help="[sc optional] Reads number cutoff for high quality cells. Cells with < 10000(default) reads will be discarded in the analysis")
+    optparser.add_option("--lowBiasPeak",dest="lowbiaspeak",type="int",default=66,
+                         help="[sc optional] use top% peaks with less bias effect. Default is 66 (66%, use top 2/3 peaks with lowest bias for single-cell analysis).")
+    optparser.add_option("--peakMinReads",dest="peakminreads",type="int",default=10,
+                         help="[sc optional] peaks with < 10(default) covered in the whole fragment files will be discarded in the analysis.")
+    optparser.add_option("--clusterMethod",dest="clustermethod",type="choice",default="PCAkm",choices=("PCAkm","Seurat","APEC","Cicero"),
+                         help="[sc optional] Method used for single cell clustering analysis. Default is PCAkm(PCA dim reduction + K+means clustering. Optional choices (Seurat,APEC,Cicero) require related packages installed")
+    optparser.add_option("--UMAP",dest="UMAP",default=False, action='store_true', 
+                         help="[sc optional] Turn on this parameter to generate a UMAP plot for the clustering results")
+    optparser.add_option("--h5",dest="h5",default=False, action='store_true', 
+                         help="[sc optional] Turn on this parameter to generate the peakXcell matrix in .h5 format")
     optparser.add_option("--overwrite",dest='fover',  default=False, action='store_true', 
-                         help = "[optional] force overwrite, this cmd will rm existing result if set !! " )
+                         help = "[optional] Force overwrite, this cmd will remove existing result if set !! " )
 
     (options,args) = optparser.parse_args()
 
-    if not options.HMRpeak:
+    if not options.mode:
         optparser.print_help()
-        print('Peak file for HMR binding sites (-p/--HMRpeak) is required')
+        print('SELMA mode (-m) is required ')
         sys.exit(1)
 
-    if not options.signal:
+    if not options.fragments:
         optparser.print_help()
-        print('Signal track (-s/--Signal) is required')
+        print('Input fragments file (-i) is required ')
         sys.exit(1)
 
-    if not options.Folder:
+    if not options.outname:
         optparser.print_help()
-        print('Folder for cofactor peak files (-f/--Folder) is required')
+        print('Output file name (-o) is required ')
+        sys.exit(1)
+
+    if not options.datatype:
+        optparser.print_help()
+        print('Datatype (-t) is required ')
+        sys.exit(1)
+
+    if not options.sequence:
+        optparser.print_help()
+        print('genome sequence file (-s) is required ')
         sys.exit(1)
 
     conf_dict = {}
     conf_dict['General'] = {}
     conf_dict['options'] = {}
 
-    conf_dict['General']['HMRpeak'] = options.HMRpeak
-    conf_dict['General']['signal'] = options.signal.split(",")
-    conf_dict['General']['peakFolder'] = options.Folder
-    conf_dict['General']['outname'] = options.outname
-    conf_dict['General']['bwfolder'] = options.bwfolder
     conf_dict['General']['mode'] = options.mode
+    conf_dict['General']['fragments'] = options.fragments
+    conf_dict['General']['format'] = options.format
+    conf_dict['General']['genome'] = options.genome
+    conf_dict['General']['sequence'] = options.sequence
+    conf_dict['General']['datatype'] = options.datatype
+    conf_dict['General']['outname'] = options.outname
 
-    conf_dict['options']['Pvalue'] = options.Pvalue
-    conf_dict['options']['Alpha'] = options.Alpha
-    conf_dict['options']['Lambda'] = options.LambdaChoice
-    conf_dict['options']['TopNcofactors'] = options.TopNcofactors
-    conf_dict['options']['ext'] = options.ext
-    conf_dict['options']['Rcutoff'] = options.Rcutoff
+    conf_dict['options']['extend'] = options.extend
+    conf_dict['options']['peakqval'] = options.peakqval
+    conf_dict['options']['bias'] = options.bias
+    conf_dict['options']['kmer'] = options.kmer
+    conf_dict['options']['scATAC10x'] = options.scATAC10x
+    conf_dict['options']['cellnames'] = options.cellnames
+    conf_dict['options']['readcutoff'] = options.readcutoff
+    conf_dict['options']['lowbiaspeak'] = options.lowbiaspeak
+    conf_dict['options']['peakminreads'] = options.peakminreads
+    conf_dict['options']['lowbiaspeak'] = options.lowbiaspeak
+    conf_dict['options']['clustermethod'] = options.clustermethod
+    conf_dict['options']['UMAP'] = options.UMAP
+    conf_dict['options']['h5'] = options.h5
     ### read raw path of output dir, the startdir will be used when the input file is not in absolute path
     conf_dict['General']['startdir'] = os.getcwd()+'/'
 
@@ -141,11 +176,6 @@ def main():
         print('ERROR: / cannot appeared in outname, current outname is %s'%(conf_dict['General']['outname']))
         sys.exit(1)
     
-        if not args.fover:
-            print('ERROR: name of your output dir is exist as a dir, ncHMR_detector exit because overwrite function is turned off, you can add -f parameter to turn on overwite function')
-            sys.exit(1)
-        else: 
-            print('name of your output dir is exist as a dir, overwrite is turned on, write output result in existing dir')
     ### creat output dir
     if os.path.isfile(conf_dict['General']['outname']):
         print('ERROR: name of your output dir %s is exist as a file, cannot create a dir, exit'%(conf_dict['General']['outname']))
@@ -178,33 +208,88 @@ def main():
     #CONFIG_TEMPLATE = os.path.join(Drseq_pipe.__path__[0], "Config/Drseq_template.conf")
     #conf_dict['rscript'] = os.path.join(HMRpipe.__path__[0], "Rscript/")#'/mnt/Storage3/CR/Dropseq/drseq/Rscript/'
     #conf_dict['clean'] = args.Clean
-        
-    ### main step for Dr.seq , see individual script for detail note.
+     
+    ### main step for SELMA , see individual script for detail note.
     # preparing step, integrate parameter, prepare for following step
-    wlog("Start ncHMR_detector",logfile)
-    wlog("Step0: check input Data and parameters",logfile)    
+
+    conf_dict['QC'] = {}
+    conf_dict['results'] = {}
+
+    wlog("Start SELMA %s"%(conf_dict['General']['mode']),logfile)
+    wlog("Step0: check input Data and parameters",logfile)   
     step0_check_data(conf_dict,logfile)
-    wlog('Step0 Data check DONE',logfile)
-    # main data processing step, including mapping, generate expression matrix and QC matrix which is used in next step
+    wlog('Step0 check input Data and parameters DONE',logfile)
+
+    # QC, reformat
     t = time.time()
-    wlog("Step1: pre-process and generate matrix",logfile)
-    step1_generate_matrix(conf_dict,logfile)
+    wlog("Step1: check quality and reformat data",logfile)
+    step1_QC_format(conf_dict,logfile)
     step1time = time.time() -t
-    wlog("Step1: pre-process and generate matrix DONE",logfile)
+    wlog("Step1: check quality and reformat data DONE",logfile)
     wlog("running time for Step1 : %s"%(step1time),logfile)
-    # QC step, including bulk RNAseq QC(option), individual cell QC
+
+    # bias matrix
     t = time.time()
-    wlog("Step2: non-classical function detection",logfile)
-    step2_NC_detection(conf_dict,logfile)
+    wlog("Step2: bias estimation",logfile)
+    step2_biasMat(conf_dict,logfile)
     step2time = time.time()-t
-    wlog("Step2: non-classical function detection DONE",logfile)
-    wlog("running time for Step2: non-classical function detection: %s"%(step2time),logfile)
-    # summary step, integrate all QC figure and expression matrix, generate qC report with latex
+    wlog("Step2: bias estimation",logfile)
+    wlog("running time for Step2: bias estimation: %s"%(step2time),logfile)
+
+    # peak calling
     t = time.time()
-    wlog('Step3: summary',logfile)
-    step3_summary(conf_dict,logfile)
+    wlog('Step3: peak detection',logfile)
+    step3_callpeak(conf_dict,logfile)
     step3time = time.time() -t
-    wlog("running time for Step3: Summary %s"%(step3time),logfile)
+    wlog("running time for Step3: peak detection %s"%(step3time),logfile)
+
+    if conf_dict['General']['mode'] == "bulk":
+       # cleavage bias
+       t = time.time()
+       wlog('Step4: generate cleavage and bias profile on peaks',logfile)
+       step4_BULKcleavageBias(conf_dict,logfile)
+       step4time = time.time() -t
+       wlog("running time for Step4: generate cleavage and bias profile on peaks %s"%(step4time),logfile)
+
+    for i in conf_dict['General'].keys():
+        print(['General',i,conf_dict['General'][i]]) 
+    for i in conf_dict['options'].keys():
+        print(['options',i,conf_dict['options'][i]]) 
+    for i in conf_dict['QC'].keys():
+        print(['QC',i,conf_dict['QC'][i]]) 
+    for i in conf_dict['results'].keys():
+        print(['results',i]) 
+
+
+#    else:
+#       # peak bias selection
+#       t = time.time()
+#       wlog('Step4: select low bias peaks',logfile)
+#       step4_SCpeakbias(conf_dict,logfile)
+#       step4time = time.time() -t
+#       wlog("running time for Step4: select low bias peaks %s"%(step4time),logfile)
+#
+#       # peakXcell mat
+#       t = time.time()
+#       wlog('Step5: generate peakXcell matrix',logfile)
+#       step5_SCpeakCellMat(conf_dict,logfile)
+#       step5time = time.time() -t
+#       wlog("running time for Step5: generate peakXcell matrix %s"%(step5time),logfile)
+# 
+#       # peakXcell mat
+#       t = time.time()
+#       wlog('Step6: cell clustering',logfile)
+#       step6_SCcellClustering(conf_dict,logfile)
+#       step6time = time.time() -t
+#       wlog("running time for Step6: cell clustering %s"%(step6time),logfile)
+#
+#    # summary
+#    t = time.time()
+#    wlog('Final step: summary',logfile)
+#    step3_callpeak(conf_dict,logfile)
+#    stepFinal_summary = time.time() -t
+#    wlog("running time for Final step: summary %s"%(stepXtime),logfile)
+#
 
 
 
