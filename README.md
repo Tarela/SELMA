@@ -34,6 +34,7 @@ $ apt-get install texlive-all
 - To install SELMA on MacOS, user needs to download and install Command Line Tools beforehand
 - SELMA requires a python3 package [macs3](https://pypi.org/project/MACS3/) pre-installed
 - SELMA suggests to have bedtools (Quinlan et al., Bioinformatics. 2010) and UCSC tools (Kuhn et al., Brief Bioinform. 2013) pre-installed for data pre-processing. The SELMA package also wrapped up both tools and would install automatically if the users did not have them pre-installed. 
+- Some function of SELMA requires the related packages pre-installed (see seciton 5)
 
 ## 2. Download genome sequence database
 SELMA require genome sequence (in .2bit format) prepared for running. You can download them from UCSC genome browser. 
@@ -105,7 +106,14 @@ You can also specify the following options for more accurate bias estimation and
 -  -\-overwrite
 [optional]Force overwrite, this cmd will rm existing result if set !!
 
-## 5. Output files
+## 5. Install and use published single cell clustering methods based on SELMA bias correction. 
+SELMA sc mode implements several well acknowledged cell clustering methods in the singlne cell clustering analysis. To activate these alternative methods (name, version and link listed below), users need to install the related package. 
+- [Seurat v4.0.0](https://satijalab.org/seurat/)
+- [APEC v1.2.2](https://github.com/QuKunLab/APEC)
+- [Cicero v1.8.1](https://www.bioconductor.org/packages/release/bioc/html/cicero.html)
+
+
+## 6. Output files
 1. `NAME_summary.pdf` is the summary pdf file which contains information of:
      - Input file and parameter description
      - basic QC of the data
@@ -126,7 +134,7 @@ You can also specify the following options for more accurate bias estimation and
 7. `NAME_scClustering.txt` (sc mode only) is the cell clustering results using SELMA debiased free peakset. )
 
 
-## 6. Testing data and example of output files
+## 7. Testing data and example of output files
 We provided the testing data for users to test the flexibility and the power of the SELMA and the example of `scATAC_summary.pdf` and `bulkATAC_summary.pdf` which generated from 10x scATAC data and ENCODE bulkATAC data, respectively. Click the file names to download. 
 - test_fragments (small input data): [`Dropbox`](https://www.google.com)
 - scATAC_summary (output): [`Dropbox`](https://www.google.com)
