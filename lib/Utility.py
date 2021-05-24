@@ -359,6 +359,7 @@ def bias_exp_cleavage(outname,peakfile,biasMat,kmer,bwsum,bdg2bw,twoBitFa,seq2bi
     Cspan = 25
     flank = int(int(kmer)/2)
     inf = open(peakfile)
+    for line in inf:
         ll = line.strip().split("\t")
         chrm = ll[0]
         start = int(ll[1])

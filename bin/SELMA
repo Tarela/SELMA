@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# Time-stamp: <2019-01-03 12:08:55 Shengen Hu>
+# Time-stamp: <2021-05-03 12:08:55 Shengen Hu>
  
-"""Description: software package for "ncHMR detector: a computational framework to systematically reveal non-classical functions of histone-modification regulators"
-Copyright (c) 2019 Shengen Hu <tarelahu@gmail.com>
+"""Description: software package for "SELMA: a computational framework for modeling intrinsic biases in chromatin accessibility sequencing data"
+Copyright (c) 2021 Shengen Hu <tarelahu@gmail.com>
 This code is free software; you can redistribute it and/or modify it
 under the terms of the BSD License (see the file COPYING included with
 the distribution).
