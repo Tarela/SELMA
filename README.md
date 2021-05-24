@@ -18,7 +18,7 @@ $ export PYTHONPATH=/home/SELMA/lib/python3.6/site-packages:$PYTHONPATH    # set
 ```
 \# To check the SELMA package, just type:
 ```sh
-$ SELMA --help  # If you see help manual, you have successfully installed HMRpipe
+$ SELMA --help  # If you see help manual, you have successfully installed SELMA
 ```
 \# Install pdflatex 
 Before you start running, SELMA will check your computer for pdflatex. If you have already installed pdflatex, SELMA will generate a summary report in addition to regular outputs and analysis results.
