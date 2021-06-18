@@ -23,6 +23,7 @@ from Utility import (sp,
                     raise_error,
                     wlog,
                     ewlog,
+                    fetchseq_2bit_chrom,
                     checkbedformat,
                     textformat,
                     CMD
@@ -51,15 +52,15 @@ def step0_check_data(conf_dict,logfile):
         conf_dict['General']['fragments'] = conf_dict['General']['startdir'] + conf_dict['General']['fragments']
     if not os.path.isfile(conf_dict['General']['fragments']):
         ewlog("fragments file %s not found"%(conf_dict['General']['fragments']),logfile)
-    if not conf_dict['General']['fragments'].endswith('.bed') :
-        ewlog('extenion of fragments file is not .bed',logfile)
-    checkbed = checkbedformat(conf_dict['General']['fragments'],1000)
+    if not conf_dict['General']['fragments'].endswith('.bed') and not conf_dict['General']['fragments'].endswith('.bed.gz'):
+        ewlog('extenion of fragments file is not .bed (nor .bed.gz)',logfile)
+    checkbed = checkbedformat(conf_dict['General']['fragments'])
     if checkbed == "fail":
         ewlog("fragments file is not a PE/SE bed file",logfile)
     else:#elif checkbed in ["PE","SE"]:
         wlog("detected bed file format is %s"%checkbed,logfile)
         if checkbed != conf_dict['General']['format']:
-            wlog("detected bed file format %s is different from the input filie format %s. Please double check the parameter -f(format)"%(checkbed,conf_dict['General']['format']),logfile)
+            wlog("detected bed file format %s is different from the input file format %s. Please double check the parameter -f(format)"%(checkbed,conf_dict['General']['format']),logfile)
     if conf_dict['options']['scATAC10x']:
         conf_dict['General']['format'] = "PE"
         wlog("--scATAC10x is turned on, assume PE data",logfile)
@@ -106,7 +107,7 @@ def step0_check_data(conf_dict,logfile):
                 conf_dict['options']["usecells"] = []
         else:
             wlog("cellnames file %s not found, ignore --cellnames parameter"%(conf_dict['options']["cellnames"]),logfile)
-
+            conf_dict['options']["usecells"] = []
     # check software
     OS = platform.system()
 
@@ -159,7 +160,7 @@ def step0_check_data(conf_dict,logfile):
             wlog("detected system is nither linux nor macOS, try linux version of twoBitToFa",logfile)
             bwsum_software = "twoBitToFa_linux"
         #conf_dict['General']['bwsummary'] = SELMA.__path__[0]+"/%s"%bwsum_software
-
+ 
     if check_bdg2bw[0].decode("ascii") != "":
         wlog("bedGraphToBigWig(UCSCtools) installed",logfile)
         conf_dict['General']['bedGraphToBigWig'] = "bedGraphToBigWig"
@@ -186,6 +187,9 @@ def step0_check_data(conf_dict,logfile):
     else:
         ewlog("require Rscript installed in the default path",logfile)
 
+    if conf_dict['options']['topDim'] < 30:
+        wlog("topDim in single-cell clustering should be >=30, set topDim=30")
+        conf_dict['options']['topDim']=30
 
     ### check chromosome sizes
     conf_dict['options']['csize'] = "/scratch/sh8tv/Project/scATAC/SELMA_pipeline/SELMA/bin/%s.sizes"%(conf_dict['General']['genome'])

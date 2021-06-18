@@ -27,10 +27,12 @@ import subprocess
 import sys
 import os
 import math
+import time
 import random
 import string
 import gzip
 import numpy
+
 def CMD(cmd):
     os.system(cmd)
 
@@ -88,6 +90,7 @@ def wlog(message,logfile):
     '''
     print a message and write the message to logfile
     '''
+    message = "### "+message
     print(message)
     os.system('echo "%s " >> %s'%(message,logfile))
     
@@ -121,10 +124,16 @@ def rlogonly(cmd,logfile) :
     os.system('echo "[CMD] %s " >> %s'%(cmd,logfile))
     CMD(cmd)
 
-def checkbedformat(bedfile,cutoff):
-    inf = open(bedfile)
-    line = inf.readline()
-    inf.close()
+def checkbedformat(bedfile):
+    if bedfile.endswith(".bed"):
+        inf = open(bedfile)
+        line = inf.readline()
+        inf.close()
+    else:
+        inf = gzip.open(bedfile,'rb')
+        line = inf.readline().decode("ascii")
+        inf.close()
+
     ll = line.strip().split("\t")
     if len(ll) < 3:
         return "fail"
@@ -145,12 +154,19 @@ def checkbedformat(bedfile,cutoff):
     #return peaknum#"pass"
 
 def split_chromosome_reads(bedfile,outname,scATAC10x,usechrom):
-    inf = open(bedfile)
+    if bedfile.endswith(".bed"):
+        inf = open(bedfile)
+    else:
+        inf = gzip.open(bedfile,'rb')
     outf_chrM = open(outname + "_chrM.bed",'w')
     outf_chromatin = open(outname + "_chromatin.bed",'w')
 
     chrom_reads = {}
-    for line in inf:
+    for lineRaw in inf:
+        if bedfile.endswith(".bed.gz"):
+            line = lineRaw.decode("ascii")
+        else:
+            line = lineRaw
         ll = line.strip().split("\t")
         chrom=ll[0]
         if not chrom in usechrom:
@@ -205,11 +221,12 @@ def filter_highQcell_reads(outname,cutoff,usecells):
     else:
         usehighQcells = [value for value in highQcells if value in usecells]
 
-
     if len(usehighQcells) < 100:
         finalcell = highQcells
+        usetag = "highQ"
     else:
         finalcell = usehighQcells
+        usetag = "highQuse"
 
     highQcellnum = len(finalcell)
     highQreadnum = 0
@@ -225,7 +242,7 @@ def filter_highQcell_reads(outname,cutoff,usecells):
             highQreadnum += 1
     outf.close()
     inf.close()
-    return [len(usehighQcells), len(finalcell), highQreadnum,len(cell_reads.keys())]
+    return [finalcell, len(usehighQcells), highQreadnum,len(cell_reads.keys()),usetag]
 
 def readBias(bgmatrix):
     pBG = {}
@@ -243,7 +260,6 @@ def readBias(bgmatrix):
             name = ll[0]
             pBG[name] = float(ll[1])
         inf.close()
-
     return pBG
 
 def rev(seq):
@@ -331,23 +347,23 @@ def extsummit(summitfile,outfile,extsize):
     outf.close()
     return peakcount
 
-def pileup_cleavage(outname,bdg2bw,csize):
-    pluslog1 = sp("macs3 pileup -i %s -f BED --extsize 1 -o %s "%(outname + "_cleavage_plus.bed", outname+ "_cleavage_plus.bdg"))
-    pluslog2 = sp("sort -k1,1 -k2,2n %s > %s"%(outname+ "_cleavage_plus.bdg",outname+ "_cleavage_plus_sorted.bdg" ))
-    pluslog3 = sp("%s %s %s %s"%(bdg2bw,outname+ "_cleavage_plus_sorted.bdg",csize,outname+ "_cleavage_plus.bw" ))
-    minuslog1 = sp("macs3 pileup -i %s -f BED --extsize 1 -o %s "%(outname + "_cleavage_minus.bed", outname+ "_cleavage_minus.bdg"))
-    minuslog2 = sp("sort -k1,1 -k2,2n %s > %s"%(outname+ "_cleavage_minus.bdg",outname+ "_cleavage_minus_sorted.bdg" ))
-    minuslog3 = sp("%s %s %s %s"%(bdg2bw,outname+ "_cleavage_minus_sorted.bdg",csize,outname+ "_cleavage_minus.bw" ))
-
-
 def fetchseq_2bit(twoBitToFaTool,seq2bit,chrm,start,end):
     result = sp("%s %s:%s:%s-%s stdout"%(twoBitToFaTool,seq2bit,chrm,start,end))[0].decode("ascii").strip().split("\n")
     if len(result) >=2:
-        return result[1]
+        return "".join(result[1:]).upper()
     else:
         return "NA"
-def fetchsignal_bw(bdg2bw,bwfile,chrm,start,end):
-    cmd = '%s %s %s %s %s '%(bdg2bw,bwfile,chrm,start,end,end-start)
+
+def fetchseq_2bit_chrom(twoBitToFaTool,seq2bit,chrm):
+    result = sp("%s %s:%s stdout"%(twoBitToFaTool,seq2bit,chrm))[0].decode("ascii").strip().split("\n")
+    if len(result) >=2:
+        return "".join(result[1:]).upper()
+    else:
+        return "NA"
+
+
+def fetchsignal_bw(bwsum,bwfile,chrm,start,end):
+    cmd = '%s %s %s %s %s %s'%(bwsum,bwfile,chrm,start,end,end-start)
     rawsig = sp(cmd)[0].decode("ascii").strip().split()
     if len(rawsig) == (end-start):
         sig = [0 if "n" in x.lower() else int(x) for x in rawsig ]
@@ -355,10 +371,14 @@ def fetchsignal_bw(bdg2bw,bwfile,chrm,start,end):
     else:
         return [0]*(end-start)
 
-def bias_exp_cleavage(outname,peakfile,biasMat,kmer,bwsum,bdg2bw,twoBitFa,seq2bit):
+def bias_exp_cleavage_DNase(outname,peakfile,biasMat,kmer,bwsum,bdg2bw,seq_dict):
+
     Cspan = 25
-    flank = int(int(kmer)/2)
+    kmer=int(kmer)
+    flank = int(kmer/2)
     inf = open(peakfile)
+    outf_plus = open(outname + "_biasExpCuts_plus.bdg",'w')
+    outf_minus = open(outname + "_biasExpCuts_minus.bdg",'w')
     for line in inf:
         ll = line.strip().split("\t")
         chrm = ll[0]
@@ -367,27 +387,31 @@ def bias_exp_cleavage(outname,peakfile,biasMat,kmer,bwsum,bdg2bw,twoBitFa,seq2bi
 
         if start-Cspan < 0:
             continue
-        plus_vector = fetchsignal_bw(bdg2bw, outname+ "_cleavage_plus.bw", chrm,start-Cspan,end+Cspan)
-        minus_vector = fetchsignal_bw(bdg2bw, outname+ "_cleavage_minus.bw", chrm,start-Cspan,end+Cspan)
+        plus_vector = fetchsignal_bw(bwsum, outname+ "_cleavage_plus.bw", chrm,start-Cspan,end+Cspan)
+        minus_vector = fetchsignal_bw(bwsum, outname+ "_cleavage_minus.bw", chrm,start-Cspan,end+Cspan)
+        plus_seq_all = seq_dict[chrm][(start-Cspan-flank):(end+Cspan+flank)]#fetchseq_2bit(twoBitFa,seq2bit,chrm,start-Cspan-flank,end+Cspan+flank)
+#        plus_seq_all = fetchseq_2bit(twoBitFa,seq2bit,chrm,start-Cspan-flank,end+Cspan+flank)
+        minus_seq_all = rev(plus_seq_all)
         plus_single_bias_enc_vector = []
         minus_single_bias_enc_vector = []
-        for pos in range(start-Cspan,end+Cspan):
-            plus_seq = fetchseq_2bit(twoBitFa,seq2bit,chrm,pos-flank,pos+flank).upper()#genome[chrm][(pos-flank):(pos+flank)].upper()
-            minus_seq = rev(fetchseq_2bit(twoBitFa,seq2bit,chrm,pos-flank,pos+flank)).upper()
+        for pos in range(end-start+2*Cspan):
+            plus_seq = plus_seq_all[pos:(pos+kmer)]
+            minus_seq = minus_seq_all[pos:(pos+kmer)]
             if len(plus_seq) == kmer and not "N" in plus_seq:
-                plus_bias_enc = biasMat[plus_seq]
+                plus_bias_enc = 2**biasMat[plus_seq]
             else:
-                plus_bias_enc = 0
+                plus_bias_enc = 1
 
             if len(minus_seq) == kmer and not "N" in minus_seq:
-                minus_bias_enc = biasMat[minus_seq]
+                minus_bias_enc = 2**biasMat[minus_seq]
             else:
                 minus_bias_enc = 0
             plus_single_bias_enc_vector.append(plus_bias_enc)
             minus_single_bias_enc_vector.append(minus_bias_enc)
         Plus_Single_encBias = numpy.array(plus_single_bias_enc_vector)
-        Minus_Single_encBias = numpy.array(minus_single_bias_enc_vector)
-
+        Minus_Single_encBias = numpy.array(minus_single_bias_enc_vector[::-1])
+        #print(time.time()-t2)
+        #t3 = time.time()
         for outpos in range(Cspan,(end-start+Cspan)):
             this_plus_single_enc = Plus_Single_encBias[outpos]
             this_minus_single_enc = Minus_Single_encBias[outpos]
@@ -403,36 +427,223 @@ def bias_exp_cleavage(outname,peakfile,biasMat,kmer,bwsum,bdg2bw,twoBitFa,seq2bi
             out_start = start + outpos - Cspan
             out_end = out_start+1
             
-            if this_plus > 0:
-                expcut_plus_raw = this_plus_cuts_sum * (this_plus_single_raw/this_plus_sum_raw)
-                expcut_plus_enc = this_plus_cuts_sum * (this_plus_single_enc/this_plus_sum_enc)
-                outf.write("\t".join(map(str,[out_chrm+"_"+str(out_start)+"_"+str(out_end)+"_+",this_plus,format(expcut_plus_raw,".3e"),format(expcut_plus_enc,".3e") ]))+"\n")
+            expcut_plus_enc = this_plus_cuts_sum * (this_plus_single_enc/this_plus_sum_enc)
+            expcut_minus_enc = this_minus_cuts_sum * (this_minus_single_enc/this_minus_sum_enc)
 
-            if this_minus > 0:
-                expcut_minus_raw = this_minus_cuts_sum * (this_minus_single_raw/this_minus_sum_raw)
-                expcut_minus_enc = this_minus_cuts_sum * (this_minus_single_enc/this_minus_sum_enc)
-                outf.write("\t".join(map(str,[out_chrm+"_"+str(out_start)+"_"+str(out_end)+"_-",this_minus,format(expcut_minus_raw,".3e"),format(expcut_minus_enc,".3e") ]))+"\n")
-
-            #outf_rawPlus.write("\t".join(map(str,[out_chrm,out_start,out_end,this_plus_single]))+"\n")
-            #outf_rawMinus.write("\t".join(map(str,[out_chrm,out_start,out_end,this_minus_single]))+"\n")
-            #outf_cbPlus.write("\t".join(map(str,[out_chrm,out_start,out_end,this_plus_cb]))+"\n")
-            #outf_cbMinus.write("\t".join(map(str,[out_chrm,out_start,out_end,this_minus_cb]))+"\n")
-            #
-            #outf_rawPlus_prop.write("\t".join(map(str,[out_chrm,out_start,out_end,this_plus_single_prop]))+"\n")
-            #outf_rawMinus_prop.write("\t".join(map(str,[out_chrm,out_start,out_end,this_minus_single_prop]))+"\n")
-            #outf_cbPlus_prop.write("\t".join(map(str,[out_chrm,out_start,out_end,this_plus_cb_prop]))+"\n")
-            #outf_cbMinus_prop.write("\t".join(map(str,[out_chrm,out_start,out_end,this_minus_cb_prop]))+"\n")
-    outf.close()
-    #outf_rawPlus.close()
-    #outf_rawMinus.close()
-    #outf_cbPlus.close()
-    #outf_cbMinus.close()
-    #outf_rawPlus_prop.close()
-    #outf_rawMinus_prop.close()
-    #outf_cbPlus_prop.close()
-    #outf_cbMinus_prop.close()
-
+            outf_plus.write("\t".join( map(str, [out_chrm,out_start,out_end,round(expcut_plus_enc,6)] ))+"\n")
+            outf_minus.write("\t".join( map(str, [out_chrm,out_start,out_end,round(expcut_minus_enc,6)] ))+"\n")
+    outf_plus.close()
+    outf_minus.close()
     inf.close()
+
+def bias_exp_cleavage_ATAC(outname,peakfile,biasMat,kmer,bwsum,bdg2bw,seq_dict):
+
+    offset=9
+    Cspan = 25
+    kmer=int(kmer)
+    flank = int(kmer/2)
+    inf = open(peakfile)
+    outf_plus = open(outname + "_biasExpCuts_plus.bdg",'w')
+    outf_minus = open(outname + "_biasExpCuts_minus.bdg",'w')
+    for line in inf:
+        ll = line.strip().split("\t")
+        chrm = ll[0]
+        start = int(ll[1])
+        end = int(ll[2])
+
+        if start-Cspan < 0:
+            continue
+        plus_vector = fetchsignal_bw(bwsum, outname+ "_cleavage_plus.bw", chrm,start-Cspan,end+Cspan)
+        minus_vector = fetchsignal_bw(bwsum, outname+ "_cleavage_minus.bw", chrm,start-Cspan,end+Cspan)
+        seqall = seq_dict[chrm][(start-Cspan-flank-offset):(end+Cspan+flank+offset)]#fetchseq_2bit(twoBitFa,seq2bit,chrm,start-Cspan-flank,end+Cspan+flank)
+#        plus_seq_all = fetchseq_2bit(twoBitFa,seq2bit,chrm,start-Cspan-flank,end+Cspan+flank)
+        plus_single_bias_enc_vector = []
+        minus_single_bias_enc_vector = []
+        for pos in range(offset,end-start+2*Cspan+offset):
+            plus_forward_seq = seqall[pos:(pos+kmer)]
+            plus_reverse_seq = rev(seqall[(pos+offset):(pos+kmer+offset)])
+            minus_forward_seq = rev(seqall[(pos+1):(pos+1+kmer)])
+            minus_reverse_seq = seqall[(pos+1-offset):(pos+1+kmer-offset)]
+            if len(plus_forward_seq) == kmer and not "N" in plus_forward_seq:
+                plus_bias = 2**biasMat[plus_forward_seq]
+            else:
+                plus_bias = 1
+            if len(minus_forward_seq) == kmer and not "N" in minus_forward_seq:
+                minus_bias = 2**biasMat[minus_forward_seq]
+            else:
+                minus_bias = 1
+            if len(plus_reverse_seq) == kmer and not "N" in plus_reverse_seq:
+                plus_reverse_bias = 2**biasMat[plus_reverse_seq]
+            else:
+                plus_reverse_bias = 1
+            if len(minus_reverse_seq) == kmer and not "N" in minus_reverse_seq:
+                minus_reverse_bias = 2**biasMat[minus_reverse_seq]
+            else:
+                minus_reverse_bias = 1    
+            plus_cb_bias = numpy.sqrt(plus_bias * plus_reverse_bias ) 
+            minus_cb_bias = numpy.sqrt(minus_bias * minus_reverse_bias)
+            plus_single_bias_enc_vector.append(plus_cb_bias)
+            minus_single_bias_enc_vector.append(minus_cb_bias)
+            
+        Plus_Single_encBias = numpy.array(plus_single_bias_enc_vector)
+        Minus_Single_encBias = numpy.array(minus_single_bias_enc_vector)
+
+        #print(time.time()-t2)
+        #t3 = time.time()
+        for outpos in range(Cspan,(end-start+Cspan)):
+            this_plus_single_enc = Plus_Single_encBias[outpos]
+            this_minus_single_enc = Minus_Single_encBias[outpos]
+            this_plus_sum_enc = sum(Plus_Single_encBias[(outpos-Cspan):(outpos+Cspan)])
+            this_minus_sum_enc = sum(Minus_Single_encBias[(outpos-Cspan):(outpos+Cspan)])
+
+            this_plus = plus_vector[outpos]
+            this_minus = minus_vector[outpos]
+            this_plus_cuts_sum = sum(plus_vector[(outpos-Cspan):(outpos+Cspan)])
+            this_minus_cuts_sum = sum(minus_vector[(outpos-Cspan):(outpos+Cspan)])
+
+            out_chrm = chrm
+            out_start = start + outpos - Cspan
+            out_end = out_start+1
+            
+            expcut_plus_enc = this_plus_cuts_sum * (this_plus_single_enc/this_plus_sum_enc)
+            expcut_minus_enc = this_minus_cuts_sum * (this_minus_single_enc/this_minus_sum_enc)
+
+            outf_plus.write("\t".join( map(str, [out_chrm,out_start,out_end,round(expcut_plus_enc,6)] ))+"\n")
+            outf_minus.write("\t".join( map(str, [out_chrm,out_start,out_end,round(expcut_minus_enc,6)] ))+"\n")
+    outf_plus.close()
+    outf_minus.close()
+    inf.close()
+  
+
+def bias_peakXcell_mat(outname,bedtools,chrom_list, kmer, biasDict, seqDict, usecells, datatype,peakminreads,peakmaxreads):
+
+    flank = int(int(kmer)/2)
+    offset=9
+    peakminreads = int(peakminreads)
+    if peakmaxreads == "NA":
+        peakmaxreads = int(1e10)
+    else:
+        peakmaxreads = int(peakmaxreads)
+
+    peakfile = outname + "_summitEXT.bed"
+    readfile = outname + "_highQcellReads.bed"
+    peakFeatures = open(outname + "_peakFeatures.txt","w")
+    peakXcellMat = open(outname + "_peakXcellMat.txt","w")
+
+    newll = ['chrm','start','end','peakname','score','cutsSum','avebias']
+    peakFeatures.write("\t".join(newll)+"\n")
+    
+    newll = ['peakname'] + usecells
+    peakXcellMat.write("\t".join(newll)+"\n")
+
+    for chrom in chrom_list:
+        if chrom == "chrM":
+            continue
+        cmdpeak = """awk '{OFS="\\t";if($1=="%s") print $0}' %s > %s"""%(chrom,peakfile, outname+"_tmpSCpeaks.bed")
+        tmplog = sp(cmdpeak)
+        try:
+            chrom_peaknum = int(sp('wc -l %s'%(outname+"_tmpSCpeaks.bed"))[0].decode("ascii").split()[0])
+        except:
+            #wlog('no peak detected for %s, skip %s'%(chrom,chrom),logfile)
+            continue 
+        if chrom_peaknum == 0:
+            #wlog('no peak detected for %s, skip %s'%(chrom,chrom),logfile)
+            continue
+        cmdread = """awk '{OFS="\\t";if($1=="%s") print $1,$2,$2+1,$4,".","+\\n"$1,$3-1,$3,$4,".","-"}' %s > %s"""%(chrom,outname+"_highQcellReads.bed", outname+"_tmpSCreads.bed")
+        tmplog = sp(cmdread)
+
+        cmdassign = "%s intersect -a %s_tmpSCpeaks.bed -b %s_tmpSCreads.bed -wao | awk '{if($NF > 0 ) print $0}'|sort -k 4,4 > %s_scOVcleavage.bed"%(bedtools,outname,outname,outname)
+        tmplog = sp(cmdassign)
+
+        inf = open("%s_scOVcleavage.bed"%outname)
+        this_peak = "NA"
+        for line in inf:
+            ll = line.strip().split("\t")
+            if this_peak == "NA":
+                this_peak = ll[3]
+                this_loci = ll[:5]
+                cell_count = [0]*len(usecells)
+                cutsSum = 0
+                biasSum = 0
+                read_info = ll[5:11]
+                if  read_info[3] in usecells:
+                    this_bias = reads_level_bias(read_info,datatype,seqDict,biasDict,flank)
+                    if this_bias != "NA":
+                        cutsSum += 1
+                        biasSum += this_bias
+                        cell_count[usecells.index(read_info[3])] += 1
+            elif this_peak != ll[3]:
+                if cutsSum >= peakminreads and cutsSum <= peakmaxreads:
+                    avebias = round(biasSum / cutsSum,6)
+                    newll =  this_loci + [cutsSum,avebias] 
+                    peakFeatures.write("\t".join(map(str,newll))+"\n")
+                    newll = [this_peak] + cell_count
+                    peakXcellMat.write("\t".join(map(str,newll))+"\n")
+                this_peak = ll[3]
+                this_loci = ll[:5]
+                cell_count = [0]*len(usecells)
+                cutsSum = 0
+                biasSum = 0
+                read_info = ll[5:11]
+                if  read_info[3] in usecells:
+                    this_bias = reads_level_bias(read_info,datatype,seqDict,biasDict,flank)
+                    if this_bias != "NA":
+                        cutsSum += 1
+                        biasSum += this_bias
+                        cell_count[usecells.index(read_info[3])] += 1
+            else:
+                read_info = ll[5:11]
+                if  read_info[3] in usecells:
+                    this_bias = reads_level_bias(read_info,datatype,seqDict,biasDict,flank)
+                    if this_bias != "NA":
+                        cutsSum += 1
+                        biasSum += this_bias
+                        cell_count[usecells.index(read_info[3])] += 1
+        
+        if cutsSum >= peakminreads and cutsSum <= peakmaxreads:
+            avebias = round(biasSum / cutsSum,6)
+            newll =  this_loci + [cutsSum,avebias] 
+            peakFeatures.write("\t".join(map(str,newll))+"\n")
+            newll = [this_peak] + cell_count
+            peakXcellMat.write("\t".join(map(str,newll))+"\n")
+        
+        inf.close()
+
+    peakFeatures.close()
+    peakXcellMat.close()
+
+def reads_level_bias(region, datatype, seqdict, biasDict, flank):
+    flank = int(flank)
+    offset=9
+    chrm = region[0]
+    start = int(region[1])#-100#upstream_ext
+    end = int(region[2])#center+100#start + 200#fulllen
+    strand = region[5]
+    if datatype == "ATAC":
+        if strand == "+":
+            forward_seq = seqdict[chrm][(start-flank):(start+flank)].upper()
+            reverse_seq = rev(seqdict[chrm][(start+offset-flank):(start+offset+flank)].upper())
+        else:
+            forward_seq = rev(seqdict[chrm][(end-flank):(end+flank)].upper())
+            reverse_seq = seqdict[chrm][(end-offset-flank):(end-offset+flank)].upper()
+    
+        if forward_seq in biasDict and reverse_seq in biasDict:
+            bias_score = (biasDict[forward_seq] + biasDict[reverse_seq])/2
+        else:
+            bias_score = "NA"
+    else:
+
+        if strand == "+":
+            forward_seq = seqdict[chrm][(start-flank):(start+flank)].upper()
+        else:
+            forward_seq = rev(seqdict[chrm][(end-flank):(end+flank)].upper())
+    
+        if forward_seq in biasDict: #and biasDict.has_key(reverse_seq):
+            bias_score = biasDict[forward_seq]# + biasDict[reverse_seq])/2
+        else:
+            bias_score = "NA"
+            
+    return bias_score
 
 
 def bwsigAve(bwfile,chrm,start,end,software):
@@ -479,6 +690,7 @@ def createDIR(dirname):
         os.system('mkdir %s'%(dirname))
 
 def strlatexformat(instr):
+    instr = str(instr)
     outstr = instr.replace('_','\_')
     return(outstr)
     

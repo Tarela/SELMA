@@ -20,7 +20,7 @@ from Utility      import (sp,
                                    CMD,
                                    split_chromosome_reads,
                                    filter_highQcell_reads)
-
+ 
 # --------------------------
 # main 
 # --------------------------
@@ -46,12 +46,14 @@ def step1_QC_format(conf_dict,logfile):
             ewlog('obtain < 100 high quality cell with reads >= %s.'%(conf_dict['options']['readcutoff']),logfile)
         if len(conf_dict['options']["usecells"]) == 0:
             wlog('no specified cellname list inputed',logfile)
-        elif filter_highQcell_results[0] < 100 :
+        elif filter_highQcell_results[4] == "highQ" :
             wlog('obtain < 100 cell left after highQ + cellname filtering, use highQ cell only',logfile)
         wlog('obtain %s cells from filtering, containing %s reads'%(filter_highQcell_results[1],filter_highQcell_results[2]),logfile)
-        conf_dict['QC']['highQcellnum'] = filter_highQcell_results[1]
-        conf_dict['QC']['highQreadnum'] = filter_highQcell_results[2]
+        conf_dict['results']['finalcells'] = filter_highQcell_results[0]
         conf_dict['QC']['totalcellnum'] = filter_highQcell_results[3]
+        conf_dict['QC']['highQcellnum'] = filter_highQcell_results[1]
+        conf_dict['QC']['finalusecellnum'] = len(conf_dict['results']['finalcells'])
+        conf_dict['QC']['finalreadnum'] = filter_highQcell_results[2]
 
     return conf_dict
 

@@ -50,10 +50,9 @@ from step1_QC_format import step1_QC_format
 from step2_biasMat import step2_biasMat
 from step3_callpeak import step3_callpeak
 from step4_BULKcleavageBias import step4_BULKcleavageBias
-#from step4_SCpeakbias import step4_SCpeakbias
-#from step5_SCpeakCellMat import step5_SCpeakCellMat
-#from step6_SCcellClustering import step6_SCcellClustering
-#from stepFinal_summary import stepFinal_summary
+from step4_SCpeakbias import step4_SCpeakbias
+from step5_SCcellClustering import step5_SCcellClustering
+from stepFinal_summary import stepFinal_summary
 
 # ------------------------------------
 # read in parameters
@@ -73,7 +72,7 @@ def main():
     optparser.add_option("-m","--mode",dest="mode",type="choice",choices=("sc","bulk"),
                              help = "[required] Mode of SELMA, choose from sc(single-cell) or bulk")
     optparser.add_option("-i","--input_fragments", dest = 'fragments',type="str",
-                             help = "[required] Input fragments file in bed format, with .bed extension, for sc mode, the 4th(name) column of bed file represents the name of the corresponded individual cell" )
+                             help = "[required] Input fragments file in bed format, with .bed extension (or .bed.gz for comparessed file), for sc mode, the 4th(name) column of bed file represents the name of the corresponded individual cell" )
     optparser.add_option("-f","--format",dest='format',type="choice",choices=("PE","SE"),default="PE",
                              help = "[required] Format of the fragments.bed file. choose from PE(paired-end, default) or SE(single-end)" )
     optparser.add_option("-t","--datatype",dest='datatype',type="choice",choices=("ATAC","DNase"),
@@ -85,7 +84,7 @@ def main():
     optparser.add_option("-o","--outname", dest="outname",type="str",
                              help = "[required] Name of output results" )
 
-#========minor options=============
+#========minor options============= 
     optparser.add_option("--extend",dest="extend",type="int",default=200,
                          help="[optional] Extension size from the peak summits, default is +/- 200bp from each peak summit.")
     optparser.add_option("--peakQval",dest="peakqval",type="float",default=0.01,
@@ -102,16 +101,22 @@ def main():
                          help="[sc optional] Reads number cutoff for high quality cells. Cells with < 10000(default) reads will be discarded in the analysis")
     optparser.add_option("--lowBiasPeak",dest="lowbiaspeak",type="int",default=66,
                          help="[sc optional] use top% peaks with less bias effect. Default is 66 (66%, use top 2/3 peaks with lowest bias for single-cell analysis).")
-    optparser.add_option("--peakMinReads",dest="peakminreads",type="int",default=10,
-                         help="[sc optional] peaks with < 10(default) covered in the whole fragment files will be discarded in the analysis.")
-    optparser.add_option("--clusterMethod",dest="clustermethod",type="choice",default="PCAkm",choices=("PCAkm","Seurat","APEC","Cicero"),
-                         help="[sc optional] Method used for single cell clustering analysis. Default is PCAkm(PCA dim reduction + K+means clustering. Optional choices (Seurat,APEC,Cicero) require related packages installed")
+    optparser.add_option("--peakMinReads",dest="peakminreads",type="str",default="10",
+                         help="[sc optional] peaks with < 10(default) cleavages covered will be discarded in the analysis.")
+    optparser.add_option("--peakMaxReads",dest="peakmaxreads",type="str",default="NA",
+                         help="[sc optional] peaks with > X cleavages covered will be discarded in the analysis. Set NA to close this function (default)")
+    optparser.add_option("--clusterMethod",dest="clustermethod",type="choice",default="PCAkm",choices=("PCAkm","Seurat","ArchR","APEC","Cicero"),
+                         help="[sc optional] Method used for single cell clustering analysis. Default is PCAkm(PCA dim reduction + K+means clustering. Optional choices (Seurat,ArchR,APEC,Cicero) require related packages installed")
+    optparser.add_option("--clusterNum",dest="clusterNum",type="int",default=7,
+                         help="[sc optional] number of clusters specified for clustering. Only used for PCAkm[clusterMethod] method")
+    optparser.add_option("--topDim",dest="topDim",type="int",default=30,
+                         help="[sc optional] number of dimensions (with highest Variance) used for clustering. Only used for PCAkm(PC) and Seurat (Latent variable). This number is suggested to be >=30 (deafult=30)")
     optparser.add_option("--UMAP",dest="UMAP",default=False, action='store_true', 
-                         help="[sc optional] Turn on this parameter to generate a UMAP plot for the clustering results")
-    optparser.add_option("--h5",dest="h5",default=False, action='store_true', 
-                         help="[sc optional] Turn on this parameter to generate the peakXcell matrix in .h5 format")
+                         help="[sc optional] Turn on this parameter to generate a UMAP plot (tSNE for APEC and Cicero) for the clustering results")
     optparser.add_option("--overwrite",dest='fover',  default=False, action='store_true', 
                          help = "[optional] Force overwrite, this cmd will remove existing result if set !! " )
+    optparser.add_option("--keeptmp",dest='keeptmp',  default=False, action='store_true', 
+                         help = "[optional] whether or not keep the intermediate results (tmpResults)" )
 
     (options,args) = optparser.parse_args()
 
@@ -161,10 +166,13 @@ def main():
     conf_dict['options']['readcutoff'] = options.readcutoff
     conf_dict['options']['lowbiaspeak'] = options.lowbiaspeak
     conf_dict['options']['peakminreads'] = options.peakminreads
+    conf_dict['options']['peakmaxreads'] = options.peakmaxreads
     conf_dict['options']['lowbiaspeak'] = options.lowbiaspeak
     conf_dict['options']['clustermethod'] = options.clustermethod
+    conf_dict['options']['clusterNum'] = options.clusterNum    
+    conf_dict['options']['topDim'] = options.topDim    
     conf_dict['options']['UMAP'] = options.UMAP
-    conf_dict['options']['h5'] = options.h5
+    conf_dict['options']['keeptmp'] = options.keeptmp
     ### read raw path of output dir, the startdir will be used when the input file is not in absolute path
     conf_dict['General']['startdir'] = os.getcwd()+'/'
 
@@ -242,7 +250,7 @@ def main():
     step3_callpeak(conf_dict,logfile)
     step3time = time.time() -t
     wlog("running time for Step3: peak detection %s"%(step3time),logfile)
-
+ 
     if conf_dict['General']['mode'] == "bulk":
        # cleavage bias
        t = time.time()
@@ -250,6 +258,25 @@ def main():
        step4_BULKcleavageBias(conf_dict,logfile)
        step4time = time.time() -t
        wlog("running time for Step4: generate cleavage and bias profile on peaks %s"%(step4time),logfile)
+    else:
+       t = time.time()
+       wlog('Step4: peak level bias estimation for single-cell',logfile)
+       step4_SCpeakbias(conf_dict,logfile)
+       step4time = time.time() -t
+       wlog("running time for Step4: peak level bias estimation for single-cell %s"%(step4time),logfile)
+
+       t = time.time()
+       wlog('Step5: single-cell clustering',logfile)
+       step5_SCcellClustering(conf_dict,logfile)
+       step5time = time.time() -t
+       wlog("running time for Step5: single-cell clustering %s"%(step5time),logfile)
+
+    # summary
+    t = time.time()
+    wlog('StepFinal: summary',logfile)
+    stepFinal_summary(conf_dict,logfile)
+    stepFtime = time.time() -t
+    wlog("running time for StepFinal: summary %s"%(stepFtime),logfile)
 
     for i in conf_dict['General'].keys():
         print(['General',i,conf_dict['General'][i]]) 

@@ -18,10 +18,11 @@ from Utility      import (sp,
                                    ewlog,
                                    rwlog,
                                    CMD,
-                                   pileup_cleavage,
-                                   bias_exp_cleavage)
+                                   fetchseq_2bit_chrom,
+                                   bias_exp_cleavage_DNase,
+                                   bias_exp_cleavage_ATAC)
 
-# --------------------------
+# -------------------------- 
 # main 
 # --------------------------
 def step4_BULKcleavageBias(conf_dict,logfile):
@@ -29,53 +30,58 @@ def step4_BULKcleavageBias(conf_dict,logfile):
     ### preparing mapping state dict
     wlog('split fragments to strand specific cleavage sites',logfile)
     if conf_dict['General']['format'] == "PE":
-        cmdplus = """awk '{OFS="\t";print $1,$2,$2+1,".",".","+"}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_plus.bed")
-        cmdminus = """awk '{OFS="\t";print $1,$3-1,$3,".",".","-"}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_minus.bed")
+        cmdplus = """awk '{OFS="\\t";print $1,$2,$2+1,".",".","+"}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_plus.bed")
+        cmdminus = """awk '{OFS="\\t";print $1,$3-1,$3,".",".","-"}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_minus.bed")
     else:
         cmdplus = """awk '{if($6=="+") print $0}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_plus.bed")
         cmdminus = """awk '{if($6=="-") print $0}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_minus.bed")
 
-    splitlog = sp(cmdplus)
-    splitlog = sp(cmdminus)
+    tmplog = sp(cmdplus)
+    tmplog = sp(cmdminus)
 
     wlog('pile up cleavage sites',logfile)
-    pileup_cleavage(conf_dict['General']['outname'],conf_dict['General']['bedGraphToBigWig'],conf_dict['options']['csize'])
+    pluslog1 = sp("macs3 pileup -i %s -f BED --extsize 1 -o %s "%(conf_dict['General']['outname'] + "_cleavage_plus.bed", conf_dict['General']['outname']+ "_cleavage_plus.bdg"))
+    pluslog2 = sp("sort -k1,1 -k2,2n %s > %s"%(conf_dict['General']['outname']+ "_cleavage_plus.bdg",conf_dict['General']['outname']+ "_cleavage_plus_sorted.bdg" ))
+    pluslog3 = sp("%s %s %s %s"%(conf_dict['General']['bedGraphToBigWig'],conf_dict['General']['outname']+ "_cleavage_plus_sorted.bdg",conf_dict['options']['csize'],conf_dict['General']['outname']+ "_cleavage_plus.bw" ))
+    minuslog1 = sp("macs3 pileup -i %s -f BED --extsize 1 -o %s "%(conf_dict['General']['outname'] + "_cleavage_minus.bed", conf_dict['General']['outname']+ "_cleavage_minus.bdg"))
+    minuslog2 = sp("sort -k1,1 -k2,2n %s > %s"%(conf_dict['General']['outname']+ "_cleavage_minus.bdg",conf_dict['General']['outname']+ "_cleavage_minus_sorted.bdg" ))
+    minuslog3 = sp("%s %s %s %s"%(conf_dict['General']['bedGraphToBigWig'],conf_dict['General']['outname']+ "_cleavage_minus_sorted.bdg",conf_dict['options']['csize'],conf_dict['General']['outname']+ "_cleavage_minus.bw" ))
+
+    wlog("remove redundant position from the extended peak file",logfile)
+    cmduni = """sort -k 1,1 -k 2,2g -k 3,3g %s | %s merge -i - > %s"""%(conf_dict['results']['peakfile'],conf_dict['General']['bedtools'],conf_dict['General']['outname']+"_summitEXTmerge.bed")
+    tmplog = sp(cmduni)
+
+    wlog('readin sequence from 2bit',logfile)
+    seq_dict = {}
+    inf = open(conf_dict['options']['csize']) 
+    for line in inf:
+        chrm = line.split()[0]
+        seq_dict[chrm] = fetchseq_2bit_chrom(conf_dict['General']['twoBitToFa'],conf_dict['General']['sequence'],chrm)
+    inf.close()
+    conf_dict['results']['seqdict'] = seq_dict
 
     wlog('calculate bias expected cleavages',logfile)
-    bias_exp_cleavage(conf_dict['General']['outname'],
-                      conf_dict['results']['peakfile'],
-                      conf_dict['results']['biasMat'],
-                      conf_dict['options']['kmer'],
-                      conf_dict['General']['bigWigSummary'],
-                      conf_dict['General']['bedGraphToBigWig'],
-                      conf_dict['General']['twoBitToFa'],
-                      conf_dict['General']['sequence'])
+    if conf_dict['General']['datatype'] == "DNase":
+        tmplog = bias_exp_cleavage_DNase(conf_dict['General']['outname'],
+                                conf_dict['General']['outname']+"_summitEXTmerge.bed",
+                                conf_dict['results']['biasMat'],
+                                conf_dict['options']['kmer'],
+                                conf_dict['General']['bigWigSummary'],
+                                conf_dict['General']['bedGraphToBigWig'],
+                                conf_dict['results']['seqdict'])
+    else:
+        tmplog = bias_exp_cleavage_ATAC(conf_dict['General']['outname'],
+                                conf_dict['General']['outname']+"_summitEXTmerge.bed",
+                                conf_dict['results']['biasMat'],
+                                conf_dict['options']['kmer'],
+                                conf_dict['General']['bigWigSummary'],
+                                conf_dict['General']['bedGraphToBigWig'],
+                                conf_dict['results']['seqdict'])
 #
+    pluslog = sp("sort -k1,1 -k2,2n %s > %s"%(conf_dict['General']['outname']+ "_biasExpCuts_plus.bdg",conf_dict['General']['outname']+ "_biasExpCuts_plus_sorted.bdg" ))
+    pluslog = sp("%s %s %s %s"%(conf_dict['General']['bedGraphToBigWig'],conf_dict['General']['outname']+ "_biasExpCuts_plus_sorted.bdg",conf_dict['options']['csize'],conf_dict['General']['outname']+ "_biasExpCuts_plus.bw" ))
 #
-#
-#    if "chrM" in chrom_reads:
-#        conf_dict['QC']["chrM_reads"] = chrom_reads["chrM"]
-#    else:
-#        conf_dict['QC']["chrM_reads"] = 0
-#    chromatin_reads = 0
-#    for chrom in chrom_reads.keys():
-#        if chrom != "chrM":
-#            chromatin_reads += chrom_reads[chrom]
-#    conf_dict['QC']["chromatin_reads"] = chromatin_reads
-#
-#    if conf_dict['General']['mode'] == "sc":
-#        wlog('filter high quality single cells',logfile)
-#        filter_highQcell_results = filter_highQcell_reads(conf_dict['General']['outname'],int(conf_dict['options']['readcutoff']),conf_dict['options']["usecells"])
-#        if filter_highQcell_results == "fail":
-#            ewlog('obtain < 100 high quality cell with reads >= %s.'%(conf_dict['options']['readcutoff']),logfile)
-#        if len(conf_dict['options']["usecells"]) == 0:
-#            wlog('no specified cellname list inputed',logfile)
-#        elif filter_highQcell_results[0] < 100 :
-#            wlog('obtain < 100 cell left after highQ + cellname filtering, use highQ cell only',logfile)
-#        wlog('obtain %s cells from filtering, containing %s reads'%(filter_highQcell_results[1],filter_highQcell_results[2]),logfile)
-#        conf_dict['QC']['highQcellnum'] = filter_highQcell_results[1]
-#        conf_dict['QC']['highQreadnum'] = filter_highQcell_results[2]
-#        conf_dict['QC']['totalcellnum'] = filter_highQcell_results[3]
-#
+    minuslog = sp("sort -k1,1 -k2,2n %s > %s"%(conf_dict['General']['outname']+ "_biasExpCuts_minus.bdg",conf_dict['General']['outname']+ "_biasExpCuts_minus_sorted.bdg" ))
+    minuslog = sp("%s %s %s %s"%(conf_dict['General']['bedGraphToBigWig'],conf_dict['General']['outname']+ "_biasExpCuts_minus_sorted.bdg",conf_dict['options']['csize'],conf_dict['General']['outname']+ "_biasExpCuts_minus.bw" ))
     return conf_dict
 

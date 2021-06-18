@@ -11,7 +11,7 @@ import time
 # --------------------------
 # custom package
 # --------------------------
-
+ 
 ### tool function
 from Utility      import (sp,
                                    wlog,
@@ -25,6 +25,9 @@ from SimplexEncoding import simplex_encoding
 # main 
 # --------------------------
 def step2_biasMat(conf_dict,logfile):
+
+    ## readin 2bit seq
+
 
     ### obtain bias mat
     if conf_dict['options']['bias'] == "naked":
