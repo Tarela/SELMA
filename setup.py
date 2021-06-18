@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Description
-Setup script for "ncHMR detector: a computational framework to systematically reveal non-classical functions of histone-modification regulators"
-Copyright (c) 2019 Shengen Hu <tarelahu@gmail.com>
+Setup script for "SELMA: a computational framework for modeling intrinsic biases in chromatin accessibility sequencing data"
+Copyright (c) 2021 Shengen Hu <sh8tv@virginia.edu>
 This code is free software; you can redistribute it and/or modify it
 under the terms of the Artistic License (see the file COPYING included
 with the distribution).
@@ -23,12 +23,6 @@ def sp(cmd):
     ac = a.communicate()
     return ac
 
-def compile_bedtools():
-    curdir = os.getcwd()
-    os.chdir('refpackage/bedtools')
-    sp('make 1>/dev/null 2>&1 ')
-    #sp('chmod 755 *')
-    os.chdir(curdir)
     
 def check_bedtools():
     checkhandle = sp('which bedtools')
@@ -50,7 +44,7 @@ class my_install_lib(distutils.command.install_lib.install_lib):
         mode = 755
         # here we start with doing our overriding and private magic ..
         for filepath in self.get_outputs():
-            if "bigWigSummary" in filepath or "bedtools" in filepath:
+            if "bigWigSummary" in filepath or "bedtools" in filepath or "bedGraphToBigWig" in filepath or "twoBitToFa" in filepath:
             #if self.install_scripts in filepath:
             #    log.info("Overriding setuptools mode of scripts ...")
             #    log.info("Changing ownership of %s to uid:%s gid %s" %
@@ -66,7 +60,7 @@ def main():
 #	    sys.exit()
     has_R = check_R()
     if has_R == 0:
-	    print("ERROR: ncHMR_detector requires R & Rscript under default PATH", file=sys.stderr)
+	    print("ERROR: SELMA requires R & Rscript under default PATH", file=sys.stderr)
 	    sys.exit()
 
     OS = platform.system()
@@ -77,83 +71,70 @@ def main():
     else:
         wlog("detected system is nither linux nor mac, try linux version of bigWigSummary",logfile)
         bwsum_software = "bigWigSummary_linux"
-        
-#    has_bedtools = check_bedtools()
-    has_bedtools=0
-    print('Intalling ncHMR_detector, may take "several" minutes')
-    if has_bedtools == 0:
-        compile_bedtools()
-        sp('mv refpackage/bedtools/bin/bedtools lib/')
-        setup(name="HMRpipe",
-              version="1.3",
-              description="ncHMR detector: a computational framework to systematically reveal non-classical functions of histone-modification regulators",
-              author='Shengen Hu',
-              author_email='Tarelahu@gmail.com',
-              url='https://github.com/Tarela/ncHMR_detector.git',
-              package_dir={'HMRpipe' : 'lib'},
-              packages=['HMRpipe'],
-              package_data={'HMRpipe': ['%s'%bwsum_software,'bedtools',#'Config/template.conf',
-                                      #'Rscript/analysis.r',
-                                      #'Rscript/individual_qc.r',
-                                      #'Rscript/readsbulkQC.r',
-                                      #'Rscript/detectNonCanonical.r'
-                                         ]},
-              scripts=['bin/ncHMR_detector_py3'],#,'refpackage/bedtools/bin/bedtools','refpackage/bwsummary/%s'%bwsum_software],
-                        
-              classifiers=[
-            'Development Status :: version1.3 finish',
-            'Environment :: Console',
-            'Intended Audience :: Developers',
-            'License :: OSI Approved :: Artistic License',
-            'Operating System :: POSIX',
-            'Programming Language :: Python',
-            'Topic :: pipeline',
-            ],
-              requires=[],
-              cmdclass={'install_lib':my_install_lib}
-          )
-        print('bedtools is not detected under default PATH, bedtools is also installed')
-        #print('Installation of ncHMR_detector is DONE')
-    
+
+    OS = platform.system()
+    if OS == "Linux":
+        bwsum_software = "bigWigSummary_linux"
+        bedtools_software = "bedtools_linux"
+        bdg2bw_software = "bedGraphToBigWig_linux"
+        twobit_software = "twoBitToFa_linux"
+    elif OS == "Darwin":
+        bwsum_software = "bigWigSummary_mac"
+        bedtools_software = "bedtools_mac"
+        bdg2bw_software = "bedGraphToBigWig_mac"
+        twobit_software = "twoBitToFa_mac"
     else:
-        setup(name="HMRpipe",
-              version="1.3",
-              description="ncHMR detector: a computational framework to systematically reveal non-classical functions of histone-modification regulators",
-              author='Shengen Hu',
-              author_email='Tarelahu@gmail.com',
-              url='https://github.com/Tarela/ncHMR_detector.git',
-              package_dir={'HMRpipe' : 'lib'},
-              packages=['HMRpipe'],
-              #package_data={}
-              package_data={'HMRpipe': ['%s'%bwsum_software]},#,#'Config/template.conf',
-                                      #'Rscript/analysis.r',
-                                      #'Rscript/individual_qc.r',
-                                      #'Rscript/readsbulkQC.r',
-                                      #'Rscript/detectNonCanonical.r'
-                                      #   ]},
-              #scripts=['bin/ncHMR_detector_py3','refpackage/bwsummary/%s'%bwsum_software],
-              scripts=['bin/ncHMR_detector_py3'],#,'refpackage/bwsummary/%s'%bwsum_software],
-              #data_files=[('/Users/sh8tv/bin',['refpackage/bwsummary/%s'%bwsum_software])],
-              classifiers=[
-            'Development Status :: version1.3 finish',
-            'Environment :: Console',
-            'Intended Audience :: Developers',
-            'License :: OSI Approved :: Artistic License',
-            'Operating System :: POSIX',
-            'Programming Language :: Python',
-            'Topic :: pipeline',
-            ],
-              requires=[],
-              cmdclass={'install_lib':my_install_lib}
+        wlog("detected system is nither linux nor mac, try linux version",logfile)
+        bwsum_software = "bigWigSummary_linux"
+        bedtools_software = "bedtools_linux"
+        bdg2bw_software = "bedGraphToBigWig_linux"
+        twobit_software = "twoBitToFa_linux"
+                
+    setup(name="SELMA",
+          version="1.0",
+          description="SELMA: a computational framework for modeling intrinsic biases in chromatin accessibility sequencing data",
+          author='Shengen Shawn Hu',
+          author_email='sh8tv@virginia.edu',
+          url='https://github.com/Tarela/SELMA.git',
+          package_dir={'SELMApipe' : 'lib'},
+          packages=['SELMApipe'],
+          #package_data={}
+          package_data={'SELMApipe': ['external_script/%s'%bwsum_software,
+                                      'external_script/%s'%bedtools_software,
+                                      'external_script/%s'%bdg2bw_software,
+                                      'external_script/%s'%twobit_software,
+                                      'refdata/hg38.sizes',
+                                      'refdata/mm10.sizes',
+                                      'refdata/ATAC_SELMAbias_10mer.txt.gz',
+                                      'refdata/DNase_SELMAbias_10mer.txt.gz'
+                                      ]},#,#'Config/template.conf',
+                                  #'Rscript/analysis.r',
+                                  #'Rscript/individual_qc.r',
+                                  #'Rscript/readsbulkQC.r',
+                                  #'Rscript/detectNonCanonical.r'
+                                  #   ]},
+          #scripts=['bin/ncHMR_detector_py3','refpackage/bwsummary/%s'%bwsum_software],
+          scripts=['bin/SELMA'],#,'refpackage/bwsummary/%s'%bwsum_software],
+          #data_files=[('/Users/sh8tv/bin',['refpackage/bwsummary/%s'%bwsum_software])],
+          classifiers=[
+        'Development Status :: version1.0 finish',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: Artistic License',
+        'Operating System :: POSIX',
+        'Programming Language :: Python',
+        'Topic :: pipeline',
+        ],
+          requires=[],
+          cmdclass={'install_lib':my_install_lib}
           )
 
-    #import HMRpipe
-
-    print('Installation of ncHMR_detector is DONE')
+    print('Installation of SELMA is DONE')
 
 
 if __name__ == '__main__':
     main()
+
 
 
 

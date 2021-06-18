@@ -31,8 +31,7 @@ import time
 #import SELMA
 
 ### tool function
-#from SELMA.Utility      
-from Utility import (sp,
+from SELMApipe.Utility import (sp,
                     pdf_name,
                     raise_error,
                     wlog,
@@ -45,14 +44,14 @@ from Utility import (sp,
 # main step
 # -------------------
 
-from step0_check_data import step0_check_data
-from step1_QC_format import step1_QC_format
-from step2_biasMat import step2_biasMat
-from step3_callpeak import step3_callpeak
-from step4_BULKcleavageBias import step4_BULKcleavageBias
-from step4_SCpeakbias import step4_SCpeakbias
-from step5_SCcellClustering import step5_SCcellClustering
-from stepFinal_summary import stepFinal_summary
+from SELMApipe.step0_check_data import step0_check_data
+from SELMApipe.step1_QC_format import step1_QC_format
+from SELMApipe.step2_biasMat import step2_biasMat
+from SELMApipe.step3_callpeak import step3_callpeak
+from SELMApipe.step4_BULKcleavageBias import step4_BULKcleavageBias
+from SELMApipe.step4_SCpeakbias import step4_SCpeakbias
+from SELMApipe.step5_SCcellClustering import step5_SCcellClustering
+from SELMApipe.stepFinal_summary import stepFinal_summary
 
 # ------------------------------------
 # read in parameters
@@ -62,7 +61,7 @@ def main():
     '''
     Read parameter 
     '''
-    usage = "%prog -i input_fragments.bed -f PE -t ATAC -o outname"
+    usage = "%prog -m sc -i input_fragments.bed -f PE -t ATAC -g hg38 -s hg38.2bit -o outname "
     description = """SELMA: a computational framework for modeling intrinsic biases in chromatin accessibility sequencing data"""
 
     optparser = OptionParser(version="%prog 1.0",description=description,usage=usage,add_help_option=False)
@@ -212,13 +211,6 @@ def main():
             print('process log is printed into %s, because %s exists and overwrite function is turned off'%(logfile,logfile_orig))
     else:
         print('process log is printed into %s'%(logfile))
-    ### Rscript location 
-    #CONFIG_TEMPLATE = os.path.join(Drseq_pipe.__path__[0], "Config/Drseq_template.conf")
-    #conf_dict['rscript'] = os.path.join(HMRpipe.__path__[0], "Rscript/")#'/mnt/Storage3/CR/Dropseq/drseq/Rscript/'
-    #conf_dict['clean'] = args.Clean
-     
-    ### main step for SELMA , see individual script for detail note.
-    # preparing step, integrate parameter, prepare for following step
 
     conf_dict['QC'] = {}
     conf_dict['results'] = {}
@@ -259,12 +251,14 @@ def main():
        step4time = time.time() -t
        wlog("running time for Step4: generate cleavage and bias profile on peaks %s"%(step4time),logfile)
     else:
+       # sc peak bias
        t = time.time()
        wlog('Step4: peak level bias estimation for single-cell',logfile)
        step4_SCpeakbias(conf_dict,logfile)
        step4time = time.time() -t
        wlog("running time for Step4: peak level bias estimation for single-cell %s"%(step4time),logfile)
 
+       # sc clustering
        t = time.time()
        wlog('Step5: single-cell clustering',logfile)
        step5_SCcellClustering(conf_dict,logfile)
@@ -278,47 +272,7 @@ def main():
     stepFtime = time.time() -t
     wlog("running time for StepFinal: summary %s"%(stepFtime),logfile)
 
-    for i in conf_dict['General'].keys():
-        print(['General',i,conf_dict['General'][i]]) 
-    for i in conf_dict['options'].keys():
-        print(['options',i,conf_dict['options'][i]]) 
-    for i in conf_dict['QC'].keys():
-        print(['QC',i,conf_dict['QC'][i]]) 
-    for i in conf_dict['results'].keys():
-        print(['results',i]) 
-
-
-#    else:
-#       # peak bias selection
-#       t = time.time()
-#       wlog('Step4: select low bias peaks',logfile)
-#       step4_SCpeakbias(conf_dict,logfile)
-#       step4time = time.time() -t
-#       wlog("running time for Step4: select low bias peaks %s"%(step4time),logfile)
-#
-#       # peakXcell mat
-#       t = time.time()
-#       wlog('Step5: generate peakXcell matrix',logfile)
-#       step5_SCpeakCellMat(conf_dict,logfile)
-#       step5time = time.time() -t
-#       wlog("running time for Step5: generate peakXcell matrix %s"%(step5time),logfile)
-# 
-#       # peakXcell mat
-#       t = time.time()
-#       wlog('Step6: cell clustering',logfile)
-#       step6_SCcellClustering(conf_dict,logfile)
-#       step6time = time.time() -t
-#       wlog("running time for Step6: cell clustering %s"%(step6time),logfile)
-#
-#    # summary
-#    t = time.time()
-#    wlog('Final step: summary',logfile)
-#    step3_callpeak(conf_dict,logfile)
-#    stepFinal_summary = time.time() -t
-#    wlog("running time for Final step: summary %s"%(stepXtime),logfile)
-#
-
-
+    wlog("SELMA finished. Check the folder: %s/summary/ for results"%(conf_dict['General']['outname']),logfile)
 
 if __name__== '__main__':
     try:

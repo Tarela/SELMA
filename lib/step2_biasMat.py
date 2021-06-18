@@ -13,14 +13,14 @@ import time
 # --------------------------
  
 ### tool function
-from Utility      import (sp,
+from SELMApipe.Utility      import (sp,
                                    wlog,
                                    ewlog,
                                    rwlog,
                                    CMD,
                                    readBias,
                                    naive_kmerBias_chrM)
-from SimplexEncoding import simplex_encoding
+from SELMApipe.SimplexEncoding import simplex_encoding
 # --------------------------
 # main 
 # --------------------------

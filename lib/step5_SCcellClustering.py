@@ -13,12 +13,12 @@ import time
 # --------------------------
 
 ### tool function
-from Utility      import (sp,
+from SELMApipe.Utility      import (sp,
                                    wlog,
                                    ewlog,
                                    rwlog,
                                    CMD)
-from scClustering import (scClustering_PCAkm,
+from SELMApipe.scClustering import (scClustering_PCAkm,
                           scClustering_Seurat,
                           scClustering_ArchR,
                           scClustering_APEC,

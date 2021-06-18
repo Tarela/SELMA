@@ -14,11 +14,10 @@ import platform
 # --------------------------
 
 ### tool function
-#import SELMA
 
 ### tool function
-#from SELMA.Utility      
-from Utility import (sp,
+import SELMApipe
+from SELMApipe.Utility import (sp,
                     pdf_name,
                     raise_error,
                     wlog,
@@ -110,6 +109,23 @@ def step0_check_data(conf_dict,logfile):
             conf_dict['options']["usecells"] = []
     # check software
     OS = platform.system()
+    # check system
+    if OS == "Linux":
+        bwsum_software = "bigWigSummary_linux"
+        bedtools_software = "bedtools_linux"
+        bdg2bw_software = "bedGraphToBigWig_linux"
+        twobit_software = "twoBitToFa_linux"
+    elif OS == "Darwin":
+        bwsum_software = "bigWigSummary_mac"
+        bedtools_software = "bedtools_mac"
+        bdg2bw_software = "bedGraphToBigWig_mac"
+        twobit_software = "twoBitToFa_mac"
+    else:
+        wlog("detected system is nither linux nor mac, try linux version",logfile)
+        bwsum_software = "bigWigSummary_linux"
+        bedtools_software = "bedtools_linux"
+        bdg2bw_software = "bedGraphToBigWig_linux"
+        twobit_software = "twoBitToFa_linux"
 
     check_bedtools = sp("which bedtools")
     check_bwsum = sp("which bigWigSummary")
@@ -117,63 +133,36 @@ def step0_check_data(conf_dict,logfile):
     check_bdg2bw = sp("which bedGraphToBigWig")
     check_macs3 = sp("which macs3")
     check_R = sp("which Rscript")
-    #check_pdflatex = os.system("which pdflatex")
+#    check_pdflatex = sp("which pdflatex")
 
     if check_bedtools[0].decode("ascii") != "":
         wlog("bedtools installed",logfile)
         conf_dict['General']['bedtools'] = "bedtools"
     else:
         wlog("bedtools not installed in the default path, use built-in bedtools")
-        if OS == "Linux":
-            bedtools_software = "bedtools_linux"
-        elif OS == "Darwin":
-            bedtools_software = "bedtools_mac"
-        else:
-            wlog("detected system is nither linux nor macOS, try linux version of bedtools",logfile)
-            bedtools_software = "bedtools_linux"
-        #conf_dict['General']['bedtools'] = SELMA.__path__[0]+"/%s"%bedtools_software
+        conf_dict['General']['bedtools'] = SELMApipe.__path__[0]+"/external_script/%s"%bedtools_software
+
 
     if check_bwsum[0].decode("ascii") != "":
         wlog("bigWigSummary(UCSCtools) installed",logfile)
         conf_dict['General']['bigWigSummary'] = "bigWigSummary"
     else:
         wlog("bigWigSummary(UCSCtools) not installed in the default path, use built-in bigWigSummary")
-        if OS == "Linux":
-            bwsum_software = "bigWigSummary_linux"
-        elif OS == "Darwin":
-            bwsum_software = "bigWigSummary_mac"
-        else:
-            wlog("detected system is nither linux nor macOS, try linux version of bigWigSummary",logfile)
-            bwsum_software = "bigWigSummary_linux"
-        #conf_dict['General']['bwsummary'] = SELMA.__path__[0]+"/%s"%bwsum_software
+        conf_dict['General']['bigWigSummary'] = SELMApipe.__path__[0]+"/external_script/%s"%bwsum_software
 
     if check_2bitfa[0].decode("ascii") != "":
         wlog("twoBitToFa(UCSCtools) installed",logfile)
         conf_dict['General']['twoBitToFa'] = "twoBitToFa"
     else:
         wlog("twoBitToFa(UCSCtools) not installed in the default path, use built-in twoBitToFa")
-        if OS == "Linux":
-            bwsum_software = "twoBitToFa_linux"
-        elif OS == "Darwin":
-            bwsum_software = "twoBitToFa_mac"
-        else:
-            wlog("detected system is nither linux nor macOS, try linux version of twoBitToFa",logfile)
-            bwsum_software = "twoBitToFa_linux"
-        #conf_dict['General']['bwsummary'] = SELMA.__path__[0]+"/%s"%bwsum_software
+        conf_dict['General']['twoBitToFa'] = SELMApipe.__path__[0]+"/external_script/%s"%twobit_software
  
     if check_bdg2bw[0].decode("ascii") != "":
         wlog("bedGraphToBigWig(UCSCtools) installed",logfile)
         conf_dict['General']['bedGraphToBigWig'] = "bedGraphToBigWig"
     else:
         wlog("bedGraphToBigWig(UCSCtools) not installed in the default path, use built-in bedGraphToBigWig")
-        if OS == "Linux":
-            bwsum_software = "bedGraphToBigWig_linux"
-        elif OS == "Darwin":
-            bwsum_software = "bedGraphToBigWig_mac"
-        else:
-            wlog("detected system is nither linux nor macOS, try linux version of bedGraphToBigWig",logfile)
-            bwsum_software = "bedGraphToBigWig_linux"
-        #conf_dict['General']['bwsummary'] = SELMA.__path__[0]+"/%s"%bwsum_software
+        conf_dict['General']['bedGraphToBigWig'] = SELMApipe.__path__[0]+"/external_script/%s"%bdg2bw_software
 
     if check_macs3[0].decode("ascii") != "":
         wlog("macs3 installed", logfile)
@@ -192,7 +181,7 @@ def step0_check_data(conf_dict,logfile):
         conf_dict['options']['topDim']=30
 
     ### check chromosome sizes
-    conf_dict['options']['csize'] = "/scratch/sh8tv/Project/scATAC/SELMA_pipeline/SELMA/bin/%s.sizes"%(conf_dict['General']['genome'])
+    conf_dict['options']['csize'] = SELMApipe.__path__[0]+"/refdata/%s.sizes"%(conf_dict['General']['genome'])
 
     conf_dict['options']['chromosome'] = []
     inf = open(conf_dict['options']['csize'])
@@ -202,11 +191,12 @@ def step0_check_data(conf_dict,logfile):
     inf.close()
 
     ### check bias Mat
-    conf_dict['options']['biasfile'] = "/scratch/sh8tv/Project/scATAC/SELMA_pipeline/SELMA/bin/%s_SELMAbias_%smer.txt.gz"%(conf_dict['General']["datatype"],conf_dict['options']["kmer"])
+    conf_dict['options']['biasfile'] = SELMApipe.__path__[0]+"/refdata/%s_SELMAbias_%smer.txt.gz"%(conf_dict['General']["datatype"],conf_dict['options']["kmer"])
     if not os.path.isfile(conf_dict['options']['biasfile']):
         wlog("no naked DNA bias matrix, use mtDNA reads to estimate",logfile)
         conf_dict['options']['bias'] = "chrM"
-            #conf_dict['General']['bwsummary'] = SELMA.__path__[0]+"/%s"%bwsum_software
+
+    return conf_dict
 
     ### check pdflatex
     #if sp('pdflatex --help')[0] == "":
@@ -360,6 +350,5 @@ def step0_check_data(conf_dict,logfile):
 #            conf_dict['options']['TopNcofactors'] = 5
 #
 
-    return conf_dict
     
     
