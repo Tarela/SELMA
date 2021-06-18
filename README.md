@@ -104,8 +104,8 @@ The following data were generated and used in SELMA study, but they would not be
 ## 7. Testing data and example of output files
 We provided the testing data for users to test the flexibility and the power of the SELMA. The sc/bulk output could also generated with the cmd line in section 3 using the testing data as input. Click the file names to download. 
 - testing data: [`Dropbox`](https://www.dropbox.com/s/dcgtsgww7jbrpyl/testdata.bed.gz?dl=0)
-- output for SELMA **sc** mode with testing data inputted: [`Dropbox`](https://www.dropbox.com/sh/x8f29ao73t5ka8a/AADPjRgtgmW0DXJTiPMYWIS-a?dl=0)
-- output for SELMA **bulk** mode with testing data inputted: [`Dropbox`](https://www.dropbox.com/sh/a292670gqfw2uaa/AABijJfJCwIqNm1kW3tak4-da?dl=0)
+- output for SELMA **bulk** mode with testing data input: [`Dropbox`](https://www.dropbox.com/sh/x8f29ao73t5ka8a/AADPjRgtgmW0DXJTiPMYWIS-a?dl=0)
+- output for SELMA **sc** mode with testing data input: [`Dropbox`](https://www.dropbox.com/sh/a292670gqfw2uaa/AABijJfJCwIqNm1kW3tak4-da?dl=0)
 
 
 ## 8. Other options of SELMA pipeline
