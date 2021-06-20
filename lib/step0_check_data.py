@@ -139,7 +139,7 @@ def step0_check_data(conf_dict,logfile):
         wlog("bedtools installed",logfile)
         conf_dict['General']['bedtools'] = "bedtools"
     else:
-        wlog("bedtools not installed in the default path, use built-in bedtools")
+        wlog("bedtools not installed in the default path, use built-in bedtools",logfile)
         conf_dict['General']['bedtools'] = SELMApipe.__path__[0]+"/external_script/%s"%bedtools_software
 
 
@@ -147,21 +147,21 @@ def step0_check_data(conf_dict,logfile):
         wlog("bigWigSummary(UCSCtools) installed",logfile)
         conf_dict['General']['bigWigSummary'] = "bigWigSummary"
     else:
-        wlog("bigWigSummary(UCSCtools) not installed in the default path, use built-in bigWigSummary")
+        wlog("bigWigSummary(UCSCtools) not installed in the default path, use built-in bigWigSummary",logfile)
         conf_dict['General']['bigWigSummary'] = SELMApipe.__path__[0]+"/external_script/%s"%bwsum_software
 
     if check_2bitfa[0].decode("ascii") != "":
         wlog("twoBitToFa(UCSCtools) installed",logfile)
         conf_dict['General']['twoBitToFa'] = "twoBitToFa"
     else:
-        wlog("twoBitToFa(UCSCtools) not installed in the default path, use built-in twoBitToFa")
+        wlog("twoBitToFa(UCSCtools) not installed in the default path, use built-in twoBitToFa",logfile)
         conf_dict['General']['twoBitToFa'] = SELMApipe.__path__[0]+"/external_script/%s"%twobit_software
  
     if check_bdg2bw[0].decode("ascii") != "":
         wlog("bedGraphToBigWig(UCSCtools) installed",logfile)
         conf_dict['General']['bedGraphToBigWig'] = "bedGraphToBigWig"
     else:
-        wlog("bedGraphToBigWig(UCSCtools) not installed in the default path, use built-in bedGraphToBigWig")
+        wlog("bedGraphToBigWig(UCSCtools) not installed in the default path, use built-in bedGraphToBigWig",logfile)
         conf_dict['General']['bedGraphToBigWig'] = SELMApipe.__path__[0]+"/external_script/%s"%bdg2bw_software
 
     if check_macs3[0].decode("ascii") != "":
@@ -177,7 +177,7 @@ def step0_check_data(conf_dict,logfile):
         ewlog("require Rscript installed in the default path",logfile)
 
     if conf_dict['options']['topDim'] < 30:
-        wlog("topDim in single-cell clustering should be >=30, set topDim=30")
+        wlog("topDim in single-cell clustering should be >=30, set topDim=30",logfile)
         conf_dict['options']['topDim']=30
 
     ### check chromosome sizes
