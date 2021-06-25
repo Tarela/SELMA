@@ -88,9 +88,10 @@ def stepFinal_summary(conf_dict,logfile):
             sp("mv %s_Cicero %s"%(conf_dict['General']['outname'],tmpresult))
 
     if conf_dict['options']['keeptmp']:
+        wlog('--keeptmp not setting, keep intermediate results',logfile)
         pass
     else:
-        wlog('--keeptmp was setting, remove intermediate results',logfile)
+        wlog('--keeptmp was not setting, remove intermediate results',logfile)
         sp("rm -r tmpResults/")
 
     wlog('Generate summary reports',logfile)
@@ -394,7 +395,7 @@ The 2-dim scatter plot represent the %s results. Each dot represents an individu
 
     check_latex = sp('which pdflatex')
     if check_latex[0].decode("ascii") == "" :
-        wlog('pdflatex was not installed, SELMA will not generate pdf version of summary report',logfile)
+        wlog('pdflatex was not installed, SELMA will not generate pdf version of summary report. Please copy the %s to an environment with pdflatex installed and complie the pdf file'%(conf_dict['General']['outname'] + '_summaryReports.tex'),logfile)
     else:
         cmd = "pdflatex %s"%(latexfile)
         tmpobj = sp(cmd)

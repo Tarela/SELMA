@@ -347,6 +347,21 @@ def extsummit(summitfile,outfile,extsize):
     outf.close()
     return peakcount
 
+def extExternal(peakfile,outfile,extsize):
+    peakcount = 0
+    inf = open(peakfile)
+    outf = open(outfile,'w')
+    for line in inf:
+        ll = line.strip().split("\t")
+        if ll[0] != "chrM":
+            peakcount += 1
+            peakcenter = int((int(ll[1]) + int(ll[2]))/2)
+            newll = [ll[0], max(0,peakcenter-extsize), peakcenter+extsize, "extPeak%s"%peakcount,"1"]
+            outf.write("\t".join(map(str,newll))+"\n")
+    inf.close()
+    outf.close()
+    return peakcount
+
 def fetchseq_2bit(twoBitToFaTool,seq2bit,chrm,start,end):
     result = sp("%s %s:%s:%s-%s stdout"%(twoBitToFaTool,seq2bit,chrm,start,end))[0].decode("ascii").strip().split("\n")
     if len(result) >=2:

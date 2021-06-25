@@ -64,7 +64,7 @@ def main():
     usage = "%prog -m sc -i input_fragments.bed -f PE -t ATAC -g hg38 -s hg38.2bit -o outname "
     description = """SELMA: a computational framework for modeling intrinsic biases in chromatin accessibility sequencing data"""
 
-    optparser = OptionParser(version="%prog 1.0",description=description,usage=usage,add_help_option=False)
+    optparser = OptionParser(version="%prog 1.0.1",description=description,usage=usage,add_help_option=False)
     optparser.add_option("-h","--help",action="help",help="Show this help message and exit.")
 
 #========major options=============
@@ -76,7 +76,7 @@ def main():
                              help = "[required] Format of the fragments.bed file. choose from PE(paired-end, default) or SE(single-end)" )
     optparser.add_option("-t","--datatype",dest='datatype',type="choice",choices=("ATAC","DNase"),
                              help = "[required] Type of sequencing data (experiments), choose from ATAC or DNase" )
-    optparser.add_option("-g","--genome",dest='genome',type="choice",choices=("hg38","mm10"),default="hg38",
+    optparser.add_option("-g","--genome",dest='genome',type="choice",default="hg38",
                              help = "[required] genome version of the input data, choose from hg38(default) and mm10" )
     optparser.add_option("-s","--sequence",dest='sequence',type="str",
                              help = "[required] genome sequence file in 2bit format" )
@@ -84,8 +84,10 @@ def main():
                              help = "[required] Name of output results" )
 
 #========minor options============= 
+    optparser.add_option("-p","--peak",dest="peak",type="str",
+                         help="[optional] external peak file. This parameter require a peak file in .bed format (>=4 column: chrom,start,end,peakname) and >=1000 peaks in the peakfile. if this parameter (-p) is inputted, SELMA will use the inputted peak file instead of the peak detected by the fragments(-i). Note that we strongly suggest to use the peak file detected with the same fragments.bed file to make sure there are enough cleavages/signal on the peak regions.")
     optparser.add_option("--extend",dest="extend",type="int",default=200,
-                         help="[optional] Extension size from the peak summits, default is +/- 200bp from each peak summit.")
+                         help="[optional] Extension size from the peak summits(centers for external peaks), default is +/- 200bp from each peak summit.")
     optparser.add_option("--peakQval",dest="peakqval",type="float",default=0.01,
                          help="[optional] Qvalue cutoff in macs3 peak calling, default is 0.01 (-q 0.01)")
     optparser.add_option("--bias",dest="bias",type="choice",default="naked",choices=("naked","chrM"),
@@ -156,6 +158,7 @@ def main():
     conf_dict['General']['datatype'] = options.datatype
     conf_dict['General']['outname'] = options.outname
 
+    conf_dict['options']['peak'] = options.peak
     conf_dict['options']['extend'] = options.extend
     conf_dict['options']['peakqval'] = options.peakqval
     conf_dict['options']['bias'] = options.bias
@@ -189,7 +192,7 @@ def main():
         sys.exit(1)
     elif os.path.isdir(conf_dict['General']['outname']):
         if not options.fover:
-            print('ERROR: name of your output dir is exist as a dir, exit because overwrite function is turned off, you can add --overwrite parameter to turn on overwite function')
+            print('ERROR: name of your output dir is exist as a dir, exit because overwrite function is turned off, you can add --overwrite parameter to turn on overwrite function')
             sys.exit(1)
         else: 
             print('name of your output dir is exist as a dir, overwrite is turned on, write output result in existing dir')

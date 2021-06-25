@@ -80,6 +80,31 @@ def step0_check_data(conf_dict,logfile):
     if not conf_dict['General']['sequence'].endswith('.2bit') :
         ewlog('extenion of sequence file is not .2bit',logfile)
 
+    # -p peak
+    if conf_dict['options']['peak']:
+        if "/" in conf_dict['options']['peak']:
+            if conf_dict['options']['peak'].startswith("/"):
+                pass
+            elif conf_dict['options']['peak'].startswith("~/"):
+                homedir = os.path.expanduser("~")
+                conf_dict['options']['peak'] = homedir +"/" + conf_dict['options']['peak'][1:]
+            else:
+                conf_dict['options']['peak'] = conf_dict['General']['startdir'] + conf_dict['options']['peak']
+        else:
+            conf_dict['options']['peak'] = conf_dict['General']['startdir'] + conf_dict['options']['peak']
+
+        if not os.path.isfile(conf_dict['options']['peak']):
+            wlog("external peak file %s not found, SELMA use macs3 to detect peaks"%(conf_dict['options']['peak']),logfile)
+            conf_dict['options']['peak'] = "NA"
+        checkbed = checkbedformat(conf_dict['options']['peak'])
+        if checkbed == "fail":
+            wlog("external peak file %s is not a bed file, SELMA use macs3 to detect peaks"%(conf_dict['options']['peak']),logfile)
+            conf_dict['options']['peak'] = "NA"
+    else:
+        wlog("no external peak file inputted, SELMA use macs3 to detect peaks",logfile)
+        conf_dict['options']['peak'] = "NA"
+        
+
     # --cellnames
     conf_dict['options']["usecells"] = []
     if conf_dict['options']["cellnames"]:
@@ -168,7 +193,9 @@ def step0_check_data(conf_dict,logfile):
         wlog("macs3 installed", logfile)
         conf_dict['General']['macs3'] = "macs3"
     else:
-        ewlog("require macs3 installed in the default path ($PATH)",logfile)
+        conf_dict['General']['macs3'] = "NA"
+        if conf_dict['options']['peak'] == "NA":
+            ewlog("The -p parameter was not detected. SELMA requires macs3 installed in the default path ($PATH) for peak calling",logfile)
 
     if check_R[0].decode("ascii") != "":
         wlog("Rscript installed",logfile)

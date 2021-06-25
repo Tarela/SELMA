@@ -4,7 +4,11 @@ Genome-wide profiling of chromatin accessibility with the assay for transposase-
 
 ## 0. Introduction of SELMA package
 SELMA performs estimation and correction of intrinsic cleavage bias of DNaseI(DNase-seq) and Tn5(ATAC-seq) data in both bulk level and single cell level. SELMA used DNase/ATAC-seq data from either naked DNA or mtDNA to estimate the intrinsic cleavage bias, and improve the bias estimation using a simplex encoding model. SELMA provides a series of bias free analysis for the bulk/sc DNase/ATAC-seq data. For bulk data, SELMA estimates the bias expected cleavages on chromatin accessibility regions (peaks) and compares with observed cleavages. For single cell data, SELMA estimates the summarized bias score on each potential chromatin accessibility regions (peaks) and only use those peaks with less bias effect for single-cell clustering analysis. 
- 
+
+- Changelog
+v1.0.1 update (-p) option for customized peak files.
+v1.0.0 First version of SELMA with both sc and bulk mode.
+
 ## 1. Installation
 SELMA requires [python](https://www.python.org) 3.6+ and [R](https://www.r-project.org) v3+ to run.
 
@@ -25,8 +29,8 @@ $ SELMA --help  # If you see help manual, you have successfully installed SELMA
 ```
 
 \# NOTE: 
-- To install SELMA on MacOS, user needs to download and install Command Line Tools beforehand
-- SELMA requires python3 packages [numpy](https://numpy.org) and [macs3](https://pypi.org/project/MACS3/) pre-installed
+- To install SELMA on MacOS, the users need to download and install Command Line Tools beforehand
+- SELMA requires python3 packages [numpy](https://numpy.org) and [macs3](https://pypi.org/project/MACS3/) pre-installed. See section 4 if the users prefer other peak calling methods or provide customized peak file. 
 - SELMA suggests to have bedtools (Quinlan et al., Bioinformatics. 2010) and UCSC tools (Kuhn et al., Brief Bioinform. 2013) pre-installed for data pre-processing. The SELMA package also wrapped up both tools and would install automatically if the users did not have them pre-installed. 
 - SELMA suggests to have pdflatex installed for the summary pdf document. To install pdflatex on macOS, you can download “MacTex” from http://tug.org/cgi-bin/mactex-download/MacTeX.pkg. To install pdflatex on linux, you need to install the texlive package from https://www.tug.org/texlive/. SELMA will generate a .txt file as a simple version of summary report without pdflatex installed. A .tex file will also be generated in case the users want to make the pdf doucment later. 
 - Some function (single cell clustering) of SELMA requires the related packages pre-installed (see seciton 4)
@@ -49,25 +53,40 @@ Format of the fragments.bed file. choose from PE(paired-end, default) or SE(sing
 -   -t DATATYPE, --datatype=DATATYPE
 Type of sequencing data (experiments), choose from ATAC or DNase
 -   -g GENOME, --genome=GENOME
-genome version of the input data, choose from hg38(default) and mm10
+genome version of the input data, default is hg38(default). Currently SELMA only support hg38 and mm10 for de novo peak detection. External peakset input (-p) is required for other genome version/speces. 
 -   -s SEQUENCE, --sequence=SEQUENCE
-genome sequence file in 2bit format
+genome sequence file in 2bit format (e.g., hg38.2bit).
 -   -o OUTNAME, --outname=OUTNAME
 Name of output results
+-   -p PEAK, --peak=PEAK  
+[optional] external peak file for the candidate chromatin accessibility regions. 
 
 Example for run SELMA with all default parameters:
 
 sc mode 
 ```sh
-$ SELMA -m sc -i ${path}testdata.bed.gz -g hg38 -f PE -o testsc -t ATAC --clusterMethod PCAkm -s ${path}/hg38.2bit --readCutoff 1000 --bias naked --kmer 10 --UMAP
+$ SELMA -m sc -i ${path}/testdata.bed.gz -g hg38 -f PE -o testsc -t ATAC --clusterMethod PCAkm -s ${path}/hg38.2bit --readCutoff 1000 --bias naked --kmer 10 --UMAP 
 ```
 
 bulk mode 
 ```sh
-$ SELMA -m bulk -i ${path}testdata.bed.gz -g hg38 -f PE -o testbulk -t ATAC -s ${path}/hg38.2bit --bias naked --kmer 10
+$ SELMA -m bulk -i ${path}/testdata.bed.gz -g hg38 -f PE -o testbulk -t ATAC -s ${path}/hg38.2bit --bias naked --kmer 10 
 ```
 
-## 4. Install and use published single cell clustering methods based on SELMA bias correction. 
+## 4. Customize target chromatin accessibility (peak) regions (v1.0.1).
+SELMA provides an option (-p) for the users to use their customized peak files as the target chromatin accessibility regions for the SELMA analysis. The required peak file should be in .bed format (plain text), have >=4 columns (chrom,start,end,name), and contain >=1000 peaks. This parameter was specifically designed for the users who don't like or have problems in installing macs3. However, we strongly suggested to use the same dataset (e.g., fragments.bed file) for the peak calling (with whatever methods the users prefered) to ensure sufficient cleavages/signal on the peak regions. Below is the example with external/customized peak file:
+
+sc mode 
+```sh
+$ SELMA -m sc -i ${path}/testdata.bed.gz -p ${path}/testpeak.bed -g hg38 -f PE -o testsc -t ATAC --clusterMethod PCAkm -s ${path}/hg38.2bit --readCutoff 1000 --bias naked --kmer 10 --UMAP 
+```
+
+bulk mode 
+```sh
+$ SELMA -m bulk -i ${path}/testdata.bed.gz -p ${path}/testpeak.bed -g hg38 -f PE -o testbulk -t ATAC -s ${path}/hg38.2bit --bias naked --kmer 10 
+```
+
+## 5. Install and use published single cell clustering methods based on SELMA bias correction. 
 SELMA sc mode implements several well acknowledged cell clustering methods in the single cell clustering analysis in additional to the default PCA+Kmeans analysis. To activate these alternative methods (name, version and link listed below), users need to install the related package, and specify the method by the --clusterMethod parameter. If any methods were specified by the --clusterMethod parameter but with no related package installed, SELMA will skip the single-cell clustering analysis. 
 - [Seurat v4.0.0](https://satijalab.org/seurat/)
 - [APEC v1.2.2](https://github.com/QuKunLab/APEC)
@@ -76,12 +95,12 @@ SELMA sc mode implements several well acknowledged cell clustering methods in th
 
 SELMA also provides UMAP/t-SNE visualization for the single-cell clustering analysis. You can activate this function by the --UMAP parameter. For the PCAkm method, the [umap](https://cran.r-project.org/web/packages/umap/index.html) package in R is required. 
 
-## 5. Processed data generated for this study
+## 6. Processed data generated for this study
 The following data were generated and used in SELMA study, but they would not be generated with SELMA pipeline automatically.
 - SELMA bias for [DNaseI(DNase-seq)](https://www.dropbox.com/s/ncemdhp0cee3cic/DNase_SELMAbias_10mer.txt.gz?dl=0) and [Tn5(ATAC-seq)](https://www.dropbox.com/s/x5iiy27ef80fl19/ATAC_SELMAbias_10mer.txt.gz?dl=0). SELMA recommended and generated 10-mer simplex encoded intrinsic cleavage bias for DNaseI and Tn5. Both bias matrix were genearted by naked DNA data DNase/ATAC-seq data. Note that the bias matrix was also built-in in the SELMA package and would also be used as reference data in SELMA pipeline.  
 - [Footprint bias score for consensus footprint regions](https://www.dropbox.com/s/f3m9q0fhlq4e9vc/consensusFP_biasScore.txt.gz?dl=0). The genome-wide consensus footprint regions were generated in the previous study (Vierstra et al., Nature. 2020) and were downloaded from the [public domain](http://vierstra.org/resources/dgf). We estimated a SELMA bias score for each of the consensus footprint region (last column of the file). 
 
-## 6. Output files
+## 7. Output files
 1. `NAME_summaryReports.pdf` is the summary pdf file which contains information of:
      - Input file and parameter description
      - basic QC of the data
@@ -101,21 +120,22 @@ The following data were generated and used in SELMA study, but they would not be
 
 7. `NAME_bias.txt` is the bias matrix estimated with SELMA methods. This file will only be generated if the users don't use the default (--bias naked) parameter (i.e. set --bias chrM to use mtDNA reads to estimate bias instead)
 
-## 7. Testing data and example of output files
+## 8. Testing data and example of output files
 We provided the testing data for users to test the flexibility and the power of the SELMA. The sc/bulk output could also generated with the cmd line in section 3 using the testing data as input. Click the file names to download. 
 - testing data: [`Dropbox`](https://www.dropbox.com/s/dcgtsgww7jbrpyl/testdata.bed.gz?dl=0)
+- testing peak file(optional for -p): [`Dropbox`](https://www.dropbox.com/s/a4r3gzux7v72rr9/testpeak.bed?dl=0)
 - output for SELMA **bulk** mode with testing data input: [`Dropbox`](https://www.dropbox.com/sh/x8f29ao73t5ka8a/AADPjRgtgmW0DXJTiPMYWIS-a?dl=0)
 - output for SELMA **sc** mode with testing data input: [`Dropbox`](https://www.dropbox.com/sh/a292670gqfw2uaa/AABijJfJCwIqNm1kW3tak4-da?dl=0) 
 
 
-## 8. Other options of SELMA pipeline
+## 9. Other options of SELMA pipeline
 You can also specify the following options for more accurate bias estimation and correction:
 -   -\-extend=EXTEND    
-[optional]Extension size from the peak summits, default is +/- 200bp from each peak summit.
+[optional]Extension size from the peak summits, default is +/- 200bp from each peak summit. The macs3 detected peaks will be extended to 400bp centered on the summit of the peak for followiing analysis (e.g., biasExpected clevages in bulk mode; cell clustering in sc mode). For the process with external peak file inputted (-p), peaks will be extended from the peak center. 
 -  -\-peakQval=PEAKQVAL
-[optional]Qvalue cutoff in macs3 peak calling, default is 0.01 (-q 0.01)
+[optional]Qvalue cutoff in macs3 peak calling, default is 0.01 (-q 0.01 in macs3). This parameter is ignored if (-p) is activaged.
 -  -\-bias=BIAS
-[optional]Methods of intrinsic cleavage bias estimation, choose from naked (default, use SELMA pre-estimated bias model from naked DNA data) or chrM (use cleavages on mtDNA to estimate bias)
+[optional]Methods of intrinsic cleavage bias estimation, choose from naked (default, use SELMA pre-estimated bias model from naked DNA data) or chrM (use cleavages on mtDNA to estimate bias). 
 -  -\-scATAC10x
 [sc optional]Turn on this parameter to use 10x scATAC mode, in which the data format is assume to be PE and the reads 5'end will be shift back to represent the cleavage sites
 -  -\-cellnames=CELLNAMES
