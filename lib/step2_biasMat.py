@@ -35,7 +35,7 @@ def step2_biasMat(conf_dict,logfile):
         conf_dict['results']['biasMat'] = readBias(conf_dict['options']['biasfile'])
     elif conf_dict['QC']['chrM_reads'] < 500000:
         wlog('chrM reads number < 500k, obtain pre-processed bias matrix from naked DNA data',logfile)
-        if not os.path.isfile(conf_dict['results']['biasMat']):
+        if not os.path.isfile(conf_dict['options']['biasfile']):
             ewlog("no naked DNA bias matrix, cannot estimate bias",logfile)
         else:
             conf_dict['results']['biasMat'] = readBias(conf_dict['options']['biasfile'])
