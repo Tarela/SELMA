@@ -76,8 +76,8 @@ def main():
                              help = "[required] Format of the fragments.bed file. choose from PE(paired-end, default) or SE(single-end)" )
     optparser.add_option("-t","--datatype",dest='datatype',type="choice",choices=("ATAC","DNase"),
                              help = "[required] Type of sequencing data (experiments), choose from ATAC or DNase" )
-    optparser.add_option("-g","--genome",dest='genome',type="choice",default="hg38",
-                             help = "[required] genome version of the input data, choose from hg38(default) and mm10" )
+    optparser.add_option("-g","--genome",dest='genome',type="str",default="hg38",
+                             help = "[required] genome version of the input data, default is hg38" )
     optparser.add_option("-s","--sequence",dest='sequence',type="str",
                              help = "[required] genome sequence file in 2bit format" )
     optparser.add_option("-o","--outname", dest="outname",type="str",
