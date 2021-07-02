@@ -5,11 +5,12 @@ Genome-wide profiling of chromatin accessibility with the assay for transposase-
 ## 0. Introduction of SELMA package
 SELMA performs estimation and correction of intrinsic cleavage bias of DNaseI(DNase-seq) and Tn5(ATAC-seq) data in both bulk level and single cell level. SELMA used DNase/ATAC-seq data from either naked DNA or mtDNA to estimate the intrinsic cleavage bias, and improve the bias estimation using a simplex encoding model. SELMA provides a series of bias free analysis for the bulk/sc DNase/ATAC-seq data. For bulk data, SELMA estimates the bias expected cleavages on chromatin accessibility regions (peaks) and compares with observed cleavages. For single cell data, SELMA estimates the summarized bias score on each potential chromatin accessibility regions (peaks) and only use those peaks with less bias effect for single-cell clustering analysis. 
 
-- Changelog
+- Changelog<br>
 v1.0.1 update (-p) option for customized peak files.<br>
 v1.0.0 First version of SELMA with both sc and bulk mode.
 
 ## 1. Installation
+- Package requirements<br>
 SELMA requires [python](https://www.python.org) 3.6+ and [Rscript](https://www.r-project.org) v3+ to run.<br>
 SELMA requires python3 packages [numpy](https://numpy.org) pre-installed.
 
@@ -31,13 +32,13 @@ $ SELMA --help  # If you see help manual, you have successfully installed SELMA
 
 \# NOTE: 
 - To install SELMA on MacOS, the users need to download and install Command Line Tools beforehand
-- SELMA requires python3 packages [numpy](https://numpy.org) and [macs3](https://pypi.org/project/MACS3/) pre-installed. See section 4 if the users prefer other peak calling methods or provide customized peak file. 
-- SELMA suggests to have bedtools (Quinlan et al., Bioinformatics. 2010) and UCSC tools (Kuhn et al., Brief Bioinform. 2013) pre-installed for data pre-processing. The SELMA package also wrapped up both tools and would install automatically if the users did not have them pre-installed. 
+- SELMA requires python3 packages [numpy](https://numpy.org) and [macs3](https://pypi.org/project/MACS3/) pre-installed. See section 4 if the users don't have macs3 or prefer other peak calling methods or provide customized peak file. 
+- SELMA suggests to have bedtools (Quinlan et al., Bioinformatics. 2010) and UCSC tools (Kuhn et al., Brief Bioinform. 2013) pre-installed for data pre-processing. The SELMA package also wrapped up both tools and would install automatically if the users did not have them pre-installed in the default PATH. 
 - SELMA suggests to have pdflatex installed for the summary pdf document. To install pdflatex on macOS, you can download “MacTex” from http://tug.org/cgi-bin/mactex-download/MacTeX.pkg. To install pdflatex on linux, you need to install the texlive package from https://www.tug.org/texlive/. SELMA will generate a .txt file as a simple version of summary report without pdflatex installed. A .tex file will also be generated in case the users want to make the pdf doucment later. 
 - Some function (single cell clustering) of SELMA requires the related packages pre-installed (see seciton 4)
 
 ## 2. Download genome sequence database
-SELMA require genome sequence (in .2bit format) prepared for running. You can download them from UCSC genome browser. 
+SELMA requires genome sequence (in .2bit format) prepared for running. You can download them from the UCSC genome browser or other public domains. 
 - [hg38.2bit](https://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/hg38.2bit)
 - [mm10.2bit](https://hgdownload.cse.ucsc.edu/goldenpath/mm10/bigZips/mm10.2bit)
 
@@ -64,12 +65,12 @@ Name of output results
 
 Example for run SELMA with all default parameters:
 
-sc mode 
+\# sc mode 
 ```sh
 $ SELMA -m sc -i ${path}/testdata.bed.gz -g hg38 -f PE -o testsc -t ATAC --clusterMethod PCAkm -s ${path}/hg38.2bit --readCutoff 1000 --bias naked --kmer 10 --UMAP 
 ```
 
-bulk mode 
+\# bulk mode 
 ```sh
 $ SELMA -m bulk -i ${path}/testdata.bed.gz -g hg38 -f PE -o testbulk -t ATAC -s ${path}/hg38.2bit --bias naked --kmer 10 
 ```
@@ -77,12 +78,12 @@ $ SELMA -m bulk -i ${path}/testdata.bed.gz -g hg38 -f PE -o testbulk -t ATAC -s 
 ## 4. Customize target chromatin accessibility (peak) regions (v1.0.1).
 SELMA provides an option (-p) for the users to use their customized peak files as the target chromatin accessibility regions for the SELMA analysis. The required peak file should be in .bed format (plain text), have >=4 columns (chrom,start,end,name), and contain >=1000 peaks. This parameter was specifically designed for the users who don't like macs3 or have problems in installing macs3. However, we strongly suggested to use the same dataset (e.g., fragments.bed file) for the peak calling (with whatever methods the users prefered) to ensure sufficient cleavages/signal on the peak regions. Below is the example with external/customized peak file:
 
-sc mode 
+\# sc mode 
 ```sh
 $ SELMA -m sc -i ${path}/testdata.bed.gz -p ${path}/testpeak.bed -g hg38 -f PE -o testsc -t ATAC --clusterMethod PCAkm -s ${path}/hg38.2bit --readCutoff 1000 --bias naked --kmer 10 --UMAP 
 ```
 
-bulk mode 
+\# bulk mode 
 ```sh
 $ SELMA -m bulk -i ${path}/testdata.bed.gz -p ${path}/testpeak.bed -g hg38 -f PE -o testbulk -t ATAC -s ${path}/hg38.2bit --bias naked --kmer 10 
 ```
@@ -111,7 +112,7 @@ The following data were generated and used in SELMA study, but they would not be
      - basic QC of the data
      - Summary of the SELMA bias estimation/correction results
 
-    \#Note: This pdf file is generated only if pdflatex is pre-installed. A NAME_summaryReports.txt file is generated as well for the simple version reports. 
+    \#Note: This pdf file is generated only if pdflatex is pre-installed. A NAME_summaryReports.txt file is generated as well for the simple version reports. A .tex file will also be generated in case the users want to make the pdf doucment later.
 
 2. `NAME_peaks.bed` is the peaks detected from the fragment files (with macs3). Each peak was extended to 400bp centered on the peak summit. 
 
