@@ -97,8 +97,8 @@ SELMA also provides UMAP/t-SNE visualization for the single-cell clustering anal
 
 ## 6. Processed data generated for this study
 The following data were generated and used in SELMA study, but they would not be generated with SELMA pipeline automatically.
-- SELMA bias for [DNaseI(DNase-seq)](https://www.dropbox.com/s/ncemdhp0cee3cic/DNase_SELMAbias_10mer.txt.gz?dl=0) and [Tn5(ATAC-seq)](https://www.dropbox.com/s/x5iiy27ef80fl19/ATAC_SELMAbias_10mer.txt.gz?dl=0). SELMA recommended and generated 10-mer simplex encoded intrinsic cleavage bias for DNaseI and Tn5. Both bias matrix were genearted by naked DNA data DNase/ATAC-seq data. Note that the bias matrix was also built-in in the SELMA package and would also be used as reference data in SELMA pipeline.  
-- [Footprint bias score for consensus footprint regions](https://www.dropbox.com/s/f3m9q0fhlq4e9vc/consensusFP_biasScore.txt.gz?dl=0). The genome-wide consensus footprint regions were generated in the previous study (Vierstra et al., Nature. 2020) and were downloaded from the [public domain](http://vierstra.org/resources/dgf). We estimated a SELMA bias score for each of the consensus footprint region (last column of the file). 
+- SELMA bias for [DNaseI(DNase-seq)](https://www.dropbox.com/s/ncemdhp0cee3cic/DNase_SELMAbias_10mer.txt.gz) and [Tn5(ATAC-seq)](https://www.dropbox.com/s/x5iiy27ef80fl19/ATAC_SELMAbias_10mer.txt.gz). SELMA recommended and generated 10-mer simplex encoded intrinsic cleavage bias for DNaseI and Tn5. Both bias matrix were genearted by naked DNA data DNase/ATAC-seq data. Note that the bias matrix was also built-in in the SELMA package and would also be used as reference data in SELMA pipeline.  
+- [Footprint bias score for consensus footprint regions](https://www.dropbox.com/s/f3m9q0fhlq4e9vc/consensusFP_biasScore.txt.gz). The genome-wide consensus footprint regions were generated in the previous study (Vierstra et al., Nature. 2020) and were downloaded from the [public domain](http://vierstra.org/resources/dgf). We estimated a SELMA bias score for each of the consensus footprint region (last column of the file). 
 
 ## 7. Output files
 1. `NAME_summaryReports.pdf` is the summary pdf file which contains information of:
@@ -122,8 +122,8 @@ The following data were generated and used in SELMA study, but they would not be
 
 ## 8. Testing data and example of output files
 We provided the testing data for users to test the flexibility and the power of the SELMA. The sc/bulk output could also generated with the cmd line in section 3 using the testing data as input. Click the file names to download. 
-- testing data: [`Dropbox`](https://www.dropbox.com/s/dcgtsgww7jbrpyl/testdata.bed.gz?dl=0)
-- testing peak file(optional for -p): [`Dropbox`](https://www.dropbox.com/s/a4r3gzux7v72rr9/testpeak.bed?dl=0)
+- testing data: [`Dropbox`](https://www.dropbox.com/s/dcgtsgww7jbrpyl/testdata.bed.gz)
+- testing peak file(optional for -p): [`Dropbox`](https://www.dropbox.com/s/a4r3gzux7v72rr9/testpeak.bed)
 - output for SELMA **bulk** mode with testing data input: [`Dropbox`](https://www.dropbox.com/sh/x8f29ao73t5ka8a/AADPjRgtgmW0DXJTiPMYWIS-a?dl=0)
 - output for SELMA **sc** mode with testing data input: [`Dropbox`](https://www.dropbox.com/sh/a292670gqfw2uaa/AABijJfJCwIqNm1kW3tak4-da?dl=0) 
 
