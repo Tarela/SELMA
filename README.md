@@ -127,7 +127,7 @@ The following data were generated and used in SELMA study, but they would not be
 7. `NAME_bias.txt` is the bias matrix estimated with SELMA methods. This file will only be generated if the users don't use the default (--bias naked) parameter (i.e. set --bias chrM to use mtDNA reads to estimate bias instead)
 
 ## 9. Testing data and example of output files
-We provided the testing data for users to test the flexibility and the power of the SELMA. The sc/bulk output could also generated with the cmd line in section 3/4 using the testing data as input. Click the file names to download. 
+We provided the testing data for users to test the flexibility and the power of the SELMA. The sc/bulk output could also generated with the cmd line in section 3/4 using the testing data as input. Click the file names to download (copy the backupLink ofr cmdline download). 
 - testing data: [`Dropbox`](https://www.dropbox.com/s/dcgtsgww7jbrpyl/testdata.bed.gz) ([backupLink](https://data.cyverse.org/dav-anon/iplant/home/tarela/SELMA/testdata.bed.gz))
 - testing peak file(optional for -p): [`Dropbox`](https://www.dropbox.com/s/a4r3gzux7v72rr9/testpeak.bed) ([backupLink](https://data.cyverse.org/dav-anon/iplant/home/tarela/SELMA/testpeak.bed))
 - output for SELMA **bulk** mode with testing data input: [`Dropbox`](https://www.dropbox.com/sh/x8f29ao73t5ka8a/AADPjRgtgmW0DXJTiPMYWIS-a?dl=0)
