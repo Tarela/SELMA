@@ -60,6 +60,7 @@ def stepFinal_summary(conf_dict,logfile):
     sp("mv %s_summits.bed %s"%(conf_dict['General']['outname'],tmpresult))
     sp("mv %s_peaks.xls %s"%(conf_dict['General']['outname'],tmpresult))
     sp("mv %s_peaks.narrowPeak %s"%(conf_dict['General']['outname'],tmpresult))
+    sp("mv %s %s"%(conf_dict['options']['csize'], tmpresult))
 
     if conf_dict['General']['mode'] == "bulk":    
         sp("mv %s_cleavage_plus.bed %s"%(conf_dict['General']['outname'],tmpresult))

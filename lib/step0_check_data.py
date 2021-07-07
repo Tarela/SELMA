@@ -140,21 +140,25 @@ def step0_check_data(conf_dict,logfile):
         bedtools_software = "bedtools_linux"
         bdg2bw_software = "bedGraphToBigWig_linux"
         twobit_software = "twoBitToFa_linux"
+        twobitI_software = "twoBitInfo_linux"
     elif OS == "Darwin":
         bwsum_software = "bigWigSummary_mac"
         bedtools_software = "bedtools_mac"
         bdg2bw_software = "bedGraphToBigWig_mac"
         twobit_software = "twoBitToFa_mac"
+        twobitI_software = "twoBitInfo_mac"
     else:
         wlog("detected system is nither linux nor mac, try linux version",logfile)
         bwsum_software = "bigWigSummary_linux"
         bedtools_software = "bedtools_linux"
         bdg2bw_software = "bedGraphToBigWig_linux"
         twobit_software = "twoBitToFa_linux"
+        twobitI_software = "twoBitInfo_linux"
 
     check_bedtools = sp("which bedtools")
     check_bwsum = sp("which bigWigSummary")
     check_2bitfa = sp("which twoBitToFa")
+    check_2bitI = sp("which twoBitInfo")
     check_bdg2bw = sp("which bedGraphToBigWig")
     check_macs3 = sp("which macs3")
     check_R = sp("which Rscript")
@@ -182,6 +186,13 @@ def step0_check_data(conf_dict,logfile):
         wlog("twoBitToFa(UCSCtools) not installed in the default path, use built-in twoBitToFa",logfile)
         conf_dict['General']['twoBitToFa'] = SELMApipe.__path__[0]+"/external_script/%s"%twobit_software
  
+    if check_2bitI[0].decode("ascii") != "":
+        wlog("twobitInfo(UCSCtools) installed",logfile)
+        conf_dict['General']['twobitInfo'] = "twoBitInfo"
+    else:
+        wlog("twobitInfo(UCSCtools) not installed in the default path, use built-in twobitInfo",logfile)
+        conf_dict['General']['twobitInfo'] = SELMApipe.__path__[0]+"/external_script/%s"%twobit_software
+
     if check_bdg2bw[0].decode("ascii") != "":
         wlog("bedGraphToBigWig(UCSCtools) installed",logfile)
         conf_dict['General']['bedGraphToBigWig'] = "bedGraphToBigWig"
@@ -208,7 +219,12 @@ def step0_check_data(conf_dict,logfile):
         conf_dict['options']['topDim']=30
 
     ### check chromosome sizes
-    conf_dict['options']['csize'] = SELMApipe.__path__[0]+"/refdata/%s.sizes"%(conf_dict['General']['genome'])
+    # readin twobit Info
+    conf_dict['options']['csize'] = "%s.sizes"%(conf_dict['General']['genome'])
+    cmdInfo = """%s %s %s"""%(conf_dict['General']['twobitInfo'], conf_dict['General']['sequence'], conf_dict['options']['csize'])
+    tmplog = sp(cmdInfo)
+
+   #conf_dict['options']['csize'] = SELMApipe.__path__[0]+"/refdata/%s.sizes"%(conf_dict['General']['genome'])
 
     conf_dict['options']['chromosome'] = []
     inf = open(conf_dict['options']['csize'])

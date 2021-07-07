@@ -282,6 +282,6 @@ if __name__== '__main__':
         main()
 
     except KeyboardInterrupt:
-        sys.stderr.write("User interrupt me ^_^ \n")
+        sys.stderr.write("User interrupt me >.< \n")
         sys.exit(0)
 

@@ -44,7 +44,7 @@ class my_install_lib(distutils.command.install_lib.install_lib):
         mode = 755
         # here we start with doing our overriding and private magic ..
         for filepath in self.get_outputs():
-            if "bigWigSummary" in filepath or "bedtools" in filepath or "bedGraphToBigWig" in filepath or "twoBitToFa" in filepath:
+            if "bigWigSummary" in filepath or "bedtools" in filepath or "bedGraphToBigWig" in filepath or "twoBitToFa" in filepath or "twoBitInfo" in filepath:
             #if self.install_scripts in filepath:
             #    log.info("Overriding setuptools mode of scripts ...")
             #    log.info("Changing ownership of %s to uid:%s gid %s" %
@@ -78,17 +78,20 @@ def main():
         bedtools_software = "bedtools_linux"
         bdg2bw_software = "bedGraphToBigWig_linux"
         twobit_software = "twoBitToFa_linux"
+        twobitI_software = "twoBitInfo_linux"
     elif OS == "Darwin":
         bwsum_software = "bigWigSummary_mac"
         bedtools_software = "bedtools_mac"
         bdg2bw_software = "bedGraphToBigWig_mac"
         twobit_software = "twoBitToFa_mac"
+        twobitI_software = "twoBitInfo_mac"
     else:
         wlog("detected system is nither linux nor mac, try linux version",logfile)
         bwsum_software = "bigWigSummary_linux"
         bedtools_software = "bedtools_linux"
         bdg2bw_software = "bedGraphToBigWig_linux"
         twobit_software = "twoBitToFa_linux"
+        twobitI_software = "twoBitInfo_linux"
                 
     setup(name="SELMA",
           version="1.0",
@@ -103,8 +106,7 @@ def main():
                                       'external_script/%s'%bedtools_software,
                                       'external_script/%s'%bdg2bw_software,
                                       'external_script/%s'%twobit_software,
-                                      'refdata/hg38.sizes',
-                                      'refdata/mm10.sizes',
+                                      'external_script/%s'%twobitI_software,
                                       'refdata/ATAC_SELMAbias_10mer.txt.gz',
                                       'refdata/DNase_SELMAbias_10mer.txt.gz'
                                       ]},#,#'Config/template.conf',
