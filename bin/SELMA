@@ -106,8 +106,10 @@ def main():
                          help="[sc optional] peaks with < 10(default) cleavages covered will be discarded in the analysis.")
     optparser.add_option("--peakMaxReads",dest="peakmaxreads",type="str",default="NA",
                          help="[sc optional] peaks with > X cleavages covered will be discarded in the analysis. Set NA to close this function (default)")
-    optparser.add_option("--clusterMethod",dest="clustermethod",type="choice",default="PCAkm",choices=("PCAkm","Seurat","ArchR","APEC","Cicero"),
-                         help="[sc optional] Method used for single cell clustering analysis. Default is PCAkm(PCA dim reduction + K+means clustering. Optional choices (Seurat,ArchR,APEC,Cicero) require related packages installed")
+#    optparser.add_option("--clusterMethod",dest="clustermethod",type="choice",default="PCAkm",choices=("PCAkm","Seurat","ArchR","APEC","Cicero"),
+#                         help="[sc optional] Method used for single cell clustering analysis. Default is PCAkm(PCA dim reduction + K+means clustering. Optional choices (Seurat,ArchR,APEC,Cicero) require related packages installed")
+    optparser.add_option("--clusterMethod",dest="clustermethod",type="choice",default="PCAkm",choices=("PCAkm","Seurat","APEC","scran"),
+                         help="[sc optional] Method used for single cell clustering analysis. Default is PCAkm(PCA dim reduction + K+means clustering. Optional choices (Seurat,scran,APEC) require related packages installed")
     optparser.add_option("--clusterNum",dest="clusterNum",type="int",default=7,
                          help="[sc optional] number of clusters specified for clustering. Only used for PCAkm[clusterMethod] method")
     optparser.add_option("--topDim",dest="topDim",type="int",default=30,

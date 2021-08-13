@@ -95,9 +95,10 @@ SELMA takes aligned fragment files (in .bed format) as input. Thus users can per
 ## 6. Install and use published single cell clustering methods based on SELMA bias correction. 
 SELMA sc mode implements several well acknowledged cell clustering methods in the single cell clustering analysis in additional to the default PCA+Kmeans analysis. To activate these alternative methods (name, version and link listed below), users need to install the related package, and specify the method by the --clusterMethod parameter. If any methods were specified by the --clusterMethod parameter but with no related package installed, SELMA will skip the single-cell clustering analysis. 
 - [Seurat v4.0.0](https://satijalab.org/seurat/)
+- [scran v1.20.1](https://bioconductor.org/packages/release/bioc/html/scran.html)
 - [APEC v1.2.2](https://github.com/QuKunLab/APEC)
-- [Cicero v1.8.1](https://www.bioconductor.org/packages/release/bioc/html/cicero.html)
-- [ArchR v1.0.1](https://www.archrproject.com)
+
+Since Seurat and scran were developed for scRNA-seq. We used the [ArchR v1.0.1](https://www.archrproject.com) version of the two methods for scATAC-seq data. 
 
 SELMA also provides UMAP/t-SNE visualization for the single-cell clustering analysis. You can activate this function by the --UMAP parameter. For the PCAkm method, the [umap](https://cran.r-project.org/web/packages/umap/index.html) package in R is required. 
 

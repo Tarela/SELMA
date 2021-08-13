@@ -386,7 +386,7 @@ def fetchsignal_bw(bwsum,bwfile,chrm,start,end):
     else:
         return [0]*(end-start)
 
-def bias_exp_cleavage_DNase(outname,peakfile,biasMat,kmer,bwsum,bdg2bw,seq_dict):
+def bias_exp_cleavage_DNase(outname,peakfile,biasMat,kmer,bedtools,seq_dict,plus_reads,minus_reads):
 
     Cspan = 25
     kmer=int(kmer)
@@ -394,6 +394,9 @@ def bias_exp_cleavage_DNase(outname,peakfile,biasMat,kmer,bwsum,bdg2bw,seq_dict)
     inf = open(peakfile)
     outf_plus = open(outname + "_biasExpCuts_plus.bdg",'w')
     outf_minus = open(outname + "_biasExpCuts_minus.bdg",'w')
+
+    
+
     for line in inf:
         ll = line.strip().split("\t")
         chrm = ll[0]
