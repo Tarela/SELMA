@@ -128,7 +128,7 @@ The following data were generated and used in SELMA study, but they would not be
 7. `NAME_bias.txt` is the bias matrix estimated with SELMA methods. This file will only be generated if the users don't use the default (--bias naked) parameter (i.e. set --bias chrM to use mtDNA reads to estimate bias instead)
 
 ## 9. Testing data and example of output files
-We provided the testing data for users to test the flexibility and the power of the SELMA. The sc/bulk output could also generated with the cmd line in section 3/4 using the testing data as input. Click the file names to download (copy the backupLink ofr cmdline download). 
+We provided the testing data for users to test the flexibility and the power of the SELMA. The sc/bulk output can also generated with the cmd line in section 3/4 using the testing data as input. Click the file names to download (copy the backupLink ofr cmdline download). 
 - testing data: [`Dropbox`](https://www.dropbox.com/s/dcgtsgww7jbrpyl/testdata.bed.gz) ([backupLink](https://data.cyverse.org/dav-anon/iplant/home/tarela/SELMA/testdata.bed.gz))
 - testing peak file(optional for -p): [`Dropbox`](https://www.dropbox.com/s/a4r3gzux7v72rr9/testpeak.bed) ([backupLink](https://data.cyverse.org/dav-anon/iplant/home/tarela/SELMA/testpeak.bed))
 - output for SELMA **bulk** mode with testing data input: [`Dropbox`](https://www.dropbox.com/sh/x8f29ao73t5ka8a/AADPjRgtgmW0DXJTiPMYWIS-a?dl=0)
@@ -144,7 +144,7 @@ You can also specify the following options for more accurate bias estimation and
 -  -\-bias=BIAS
 [optional]Methods of intrinsic cleavage bias estimation, choose from naked (default, use SELMA pre-estimated bias model from naked DNA data) or chrM (use cleavages on mtDNA to estimate bias). Our pre-processed bias model from naked DNA data was proved to work perfectly in human and mouse. For other species, users can consider using the chrM option. 
 -  -\-scATAC10x
-[sc optional]Turn on this parameter to use 10x scATAC mode, in which the data format is assume to be PE and the reads 5'end will be shift back to represent the cleavage sites. If the fragments bed file was directly generated from the 10x cellranger-atac pipeline, users should set this parameter to ensure that the Tn5 cleavage site could be correctly captured. 
+[sc optional]Turn on this parameter to use 10x scATAC mode, in which the data format is assume to be PE and the reads 5'end will be shift back to represent the cleavage sites. If the fragments bed file was directly generated from the 10x cellranger-atac pipeline, users should set this parameter to ensure that the Tn5 cleavage site can be correctly captured. 
 -  -\-cellnames=CELLNAMES
 [sc optional]Single column file for name list of used individual cells, each line contain the name of the individual cell. This parameter is only used for sc mode. This parameter is usually ignored for common usage. 
 -  -\-readCutoff=READCUTOFF
@@ -169,5 +169,5 @@ You can also specify the following options for more accurate bias estimation and
 [optional]whether or not keep the intermediate results (tmpResults/)
 
 # Intermediate data and scripts in the manuscript
-The intermediate data and scripts in the manuscript could be download [here](https://www.dropbox.com/sh/rc0sd0x40e0dmqg/AAAgafYjM6HNYhlU185bGjjaa?dl=0). Check the README file in the folder for detailed annotation.
+The intermediate data and scripts in the manuscript can be download [here](https://www.dropbox.com/sh/rc0sd0x40e0dmqg/AAAgafYjM6HNYhlU185bGjjaa?dl=0). Check the README file in the folder for detailed annotation.
 
