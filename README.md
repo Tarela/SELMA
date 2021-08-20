@@ -168,6 +168,6 @@ You can also specify the following options for more accurate bias estimation and
 -  -\-keeptmp
 [optional]whether or not keep the intermediate results (tmpResults/)
 
-# Intermediate results used in the manuscript
+# Intermediate results in the manuscript
 The intermediate results generated in the manuscript could be download [here](https://www.dropbox.com/sh/rc0sd0x40e0dmqg/AAAgafYjM6HNYhlU185bGjjaa?dl=0). Check the README file in the folder for detailed annotation.
 
