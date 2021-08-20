@@ -130,35 +130,35 @@ We provided the test data for users to test SELMA. The sc/bulk output can also b
 
 ## 9. Other parameters in the SELMA pipeline
 You can also set the following parameters for more accurate bias estimation and correction:
--   -\-extend=EXTEND    
+- -\-extend=EXTEND  
 [optional] Extension size from the peak summits, default is +/- 200bp from each peak summit. The MACS3 peaks will be extended to 400bp centered on the summit of the peak for the analysis (e.g., biasExpected clevages in bulk mode; cell clustering in sc mode). For the process with external peak file inputted (-p), peaks will be extended from the peak center coordinate. 
--   -\-peakQval=PEAKQVAL
+- -\-peakQval=PEAKQVAL  
 [optional] Qvalue cutoff in MACS3 peak calling, default is 0.01 (-q 0.01 in MACS3). This parameter is ignored if (-p) is set.
--   -\-bias=BIAS 
+- -\-bias=BIAS  
 [optional] Bias estimation method, to be selected from naked (default, use SELMA pre-estimated bias score from naked DNA data) or chrM (use mtDNA reads to estimate bias). Naked DNA-generated bias model works fine for human and mouse. Users can consider using the chrM option for other species. 
--   -\-scATAC10x 
+- -\-scATAC10x  
 [sc optional] Turn on this parameter to use 10X scATAC mode, in which the data format is assumed to be PE and the 5'end coordinate of each read will be shifted back to represent the actual cleavage sites. If the fragments bed file is directly generated from the 10X Cellranger-atac pipeline, users should set this parameter to ensure that the Tn5 cleavage site are correctly captured. 
--   -\-cellnames=CELLNAMES 
+- -\-cellnames=CELLNAMES  
 [sc optional] Single column file for name list of used individual cells, each line contains the name of an individual cell. This parameter is only used for sc mode. This parameter is not used very common. 
--   -\-readCutoff=READCUTOFF 
+- -\-readCutoff=READCUTOFF  
 [sc optional] Reads number cutoff for high-quality cells. Cells with < 10000(default) reads will be discarded in the analysis. For samples with low sequencing depth, users can change this parameter to include more cells in the analysis. Setting a lower number for this parameter will possibly decrease the accuracy of clustering results due to the low-quality cells. 
--   -\-lowBiasPeak=LOWBIASPEAK 
+- -\-lowBiasPeak=LOWBIASPEAK  
 [sc optional] Filter peaks based on PBS and keep top% peaks with the lowest PBS for single-cell analysis. Default is 67 (67%, use top 2/3 peaks with lowest PBS). Note that different percentage of lowest PBS peaks will always improve the clustering analysis. 
--   -\-peakMinReads=PEAKMINREADS 
+- -\-peakMinReads=PEAKMINREADS  
 [sc optional] Peaks with < 10(default) cleavages covered (across all high-quality cells) will be discarded in the analysis.
--   -\-peakMaxReads=PEAKMAXREADS 
+- -\-peakMaxReads=PEAKMAXREADS  
 [sc optional] Peaks with > X cleavages covered (across all high-quality cells) will be discarded in the analysis. Set NA to close this function (default)
--   -\-clusterMethod=CLUSTERMETHOD 
+- -\-clusterMethod=CLUSTERMETHOD  
 [sc optional] Method used for single cell clustering analysis. Default is PCAkm(PCA dim reduction + K-means clustering). Optional choices (Seurat,scran, and APEC) require related packages installed (described in section 5)
--   -\-clusterNum=CLUSTERNUM 
+- -\-clusterNum=CLUSTERNUM  
 [sc optional] Number of clusters specified for K-means clustering. Only used for the PCAkm (setting by --clusterMethod) method. If users have no idea approximately how many clusters the sample should have, we suggest to set 7 as default or simply try other optional methods (described in section 5). 
--   -\-topDim=TOPDIM 
+- -\-topDim=TOPDIM  
 [sc optional] Number of dimensions (with highest Variance) used for clustering. Only used for PCAkm(PC) and ArchR (Latent variable). This number is suggested to be >=30 (deafult=30)
--   -\-UMAP 
+- -\-UMAP  
 [sc optional] Turn on this parameter to generate a UMAP plot for the clustering results
--   -\-overwrite 
+- -\-overwrite  
 [optional] Force overwrite, setting this parameter will remove existing result! SELMA will terminate if there is a folder with the same name as -o in the working directory. Set this parameter to force SELMA running. 
--   -\-keeptmp 
+- -\-keeptmp  
 [optional] Whether or not keep the intermediate results (tmpResults/)
 
 # Supplementary data and scripts
