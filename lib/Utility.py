@@ -386,151 +386,356 @@ def fetchsignal_bw(bwsum,bwfile,chrm,start,end):
     else:
         return [0]*(end-start)
 
-def bias_exp_cleavage_DNase(outname,peakfile,biasMat,kmer,bedtools,seq_dict,plus_reads,minus_reads):
+
+def bias_exp_cleavage_DNase(outname,peakfile,biasMat,kmer,bedtools,seq_dict,totalreads,dataformat):
 
     Cspan = 25
     kmer=int(kmer)
     flank = int(kmer/2)
+
+    # extend peak to peak+Cspan, split to chromosome level
+    chromosome_peak_dict = {}
+    plus_cut_dict = {}
+    minus_cut_dict = {}
+    # split merge peak
     inf = open(peakfile)
+    count = 0
+    for line in inf:
+        ll = line.split()
+        chrom = ll[0]
+        count += 1
+        newll = [chrom, int(ll[1]) - Cspan, int(ll[2]) + Cspan, "mergePeak%s"%count]
+        if not chrom in chromosome_peak_dict:
+            chromosome_peak_dict[chrom] = open("%s_mergePeaks.bed"%(chrom),'w')
+            plus_cut_dict[chrom] = open("%s_plusCuts.bed"%(chrom),'w')
+            minus_cut_dict[chrom] = open("%s_minusCuts.bed"%(chrom),'w')
+        chromosome_peak_dict[chrom].write("\t".join(map(str,newll))+"\n")
+    inf.close()
+    for chrom in chromosome_peak_dict.keys():
+        chromosome_peak_dict[chrom].close()
+    # split reads (to plus and minus)
+    inf = open(totalreads)
+    count = 0
+    for line in inf:
+        ll = line.split()
+        chrom = ll[0]
+        if not chrom in chromosome_peak_dict:
+            continue
+        if dataformat == "PE":
+            count += 1
+            newll = [chrom, ll[1] ,int(ll[1])+1, "c%s"%count,".","+"]
+            plus_cut_dict[chrom].write("\t".join(map(str,newll))+"\n")
+            count += 1
+            newll = [chrom, int(ll[2])-1 ,ll[2], "c%s"%count,".","-"]
+            minus_cut_dict[chrom].write("\t".join(map(str,newll))+"\n")
+        else:
+            count += 1
+            if ll[5] == "+":
+                newll = [chrom, ll[1] ,int(ll[1])+1, "c%s"%count,".","+"]
+                plus_cut_dict[chrom].write("\t".join(map(str,newll))+"\n")
+            else:
+                newll = [chrom, int(ll[2])-1 ,ll[2], "c%s"%count,".","-"]
+                minus_cut_dict[chrom].write("\t".join(map(str,newll))+"\n")
+    inf.close()
+    for chrom in chromosome_peak_dict.keys():
+        plus_cut_dict[chrom].close()
+        minus_cut_dict[chrom].close()
+
+
     outf_plus = open(outname + "_biasExpCuts_plus.bdg",'w')
     outf_minus = open(outname + "_biasExpCuts_minus.bdg",'w')
 
+    ### for each chromosome, intersect and calculate cleavage pattern
+    for chrom in chromosome_peak_dict.keys():
+        OVcmd1 = """%s intersect -a %s -b %s -wao > %s """%(bedtools,"%s_mergePeaks.bed"%(chrom), "%s_plusCuts.bed"%(chrom), "%s_plusCutsOnPeak.bed"%(chrom))
+        OVcmd2 = """%s intersect -a %s -b %s -wao > %s """%(bedtools,"%s_mergePeaks.bed"%(chrom), "%s_minusCuts.bed"%(chrom), "%s_minusCutsOnPeak.bed"%(chrom))
+        os.system(OVcmd1)
+        os.system(OVcmd2)
+
+        #### readin bias vector
+        mergePeaks = []
+        mergePeak_dict = {}
+        thisChrom_plus_bias_dict = {}
+        thisChrom_minus_bias_dict = {}
+        thisChrom_plus_cuts_dict = {}
+        thisChrom_minus_cuts_dict = {}
+        inf = open("%s_mergePeaks.bed"%(chrom))
+        for line in inf:
+            ll = line.strip().split("\t")
+            chrm = ll[0]
+            start = int(ll[1])
+            end = int(ll[2])
+            peakname = ll[3]
+            plus_seq_all = seq_dict[chrm][(start-flank):(end+flank)]
+            minus_seq_all = rev(plus_seq_all)
+            plus_single_bias_enc_vector = []
+            minus_single_bias_enc_vector = []
+            for pos in range(end-start):
+                plus_seq = plus_seq_all[pos:(pos+kmer)]
+                minus_seq = minus_seq_all[pos:(pos+kmer)]
+                if len(plus_seq) == kmer and not "N" in plus_seq:
+                    plus_bias_enc = 2**biasMat[plus_seq]
+                else:
+                    plus_bias_enc = 1
     
+                if len(minus_seq) == kmer and not "N" in minus_seq:
+                    minus_bias_enc = 2**biasMat[minus_seq]
+                else:
+                    minus_bias_enc = 0
+                plus_single_bias_enc_vector.append(plus_bias_enc)
+                minus_single_bias_enc_vector.append(minus_bias_enc)
+            Plus_Single_encBias = numpy.array(plus_single_bias_enc_vector)
+            Minus_Single_encBias = numpy.array(minus_single_bias_enc_vector[::-1]) 
+            thisChrom_plus_bias_dict[peakname] = Plus_Single_encBias
+            thisChrom_minus_bias_dict[peakname] = Minus_Single_encBias
+            thisChrom_plus_cuts_dict[peakname] = [0]*(end-start)#Plus_Single_encBias
+            thisChrom_minus_cuts_dict[peakname] = [0]*(end-start)#Minus_Single_encBias
+            mergePeaks.append(peakname)
+            mergePeak_dict[peakname] = [chrm,start+Cspan,end-Cspan,peakname]
+        inf.close()
 
-    for line in inf:
-        ll = line.strip().split("\t")
-        chrm = ll[0]
-        start = int(ll[1])
-        end = int(ll[2])
+        ### readin cuts 
+        inf = open("%s_plusCutsOnPeak.bed"%(chrom))
+        for line in inf:        
+            ll = line.strip().split("\t")
+            chrm = ll[0]
+            peak_start = int(ll[1])#+Cspan
+            peak_end = int(ll[2])#-Cspan
+            peakname = ll[3]
+            read_start = int(ll[5])
+            if read_start != -1:
+                relative_pos = read_start - peak_start
+            thisChrom_plus_cuts_dict[peakname][relative_pos] += 1
+        inf.close()
 
-        if start-Cspan < 0:
-            continue
-        plus_vector = fetchsignal_bw(bwsum, outname+ "_cleavage_plus.bw", chrm,start-Cspan,end+Cspan)
-        minus_vector = fetchsignal_bw(bwsum, outname+ "_cleavage_minus.bw", chrm,start-Cspan,end+Cspan)
-        plus_seq_all = seq_dict[chrm][(start-Cspan-flank):(end+Cspan+flank)]#fetchseq_2bit(twoBitFa,seq2bit,chrm,start-Cspan-flank,end+Cspan+flank)
-#        plus_seq_all = fetchseq_2bit(twoBitFa,seq2bit,chrm,start-Cspan-flank,end+Cspan+flank)
-        minus_seq_all = rev(plus_seq_all)
-        plus_single_bias_enc_vector = []
-        minus_single_bias_enc_vector = []
-        for pos in range(end-start+2*Cspan):
-            plus_seq = plus_seq_all[pos:(pos+kmer)]
-            minus_seq = minus_seq_all[pos:(pos+kmer)]
-            if len(plus_seq) == kmer and not "N" in plus_seq:
-                plus_bias_enc = 2**biasMat[plus_seq]
-            else:
-                plus_bias_enc = 1
+        inf = open("%s_minusCutsOnPeak.bed"%(chrom))
+        for line in inf:        
+            ll = line.strip().split("\t")
+            chrm = ll[0]
+            peak_start = int(ll[1])#+Cspan
+            peak_end = int(ll[2])#-Cspan
+            peakname = ll[3]
+            read_start = int(ll[5])
+            if read_start != -1:
+                relative_pos = read_start - peak_start
+            thisChrom_minus_cuts_dict[peakname][relative_pos] += 1
+        inf.close()
 
-            if len(minus_seq) == kmer and not "N" in minus_seq:
-                minus_bias_enc = 2**biasMat[minus_seq]
-            else:
-                minus_bias_enc = 0
-            plus_single_bias_enc_vector.append(plus_bias_enc)
-            minus_single_bias_enc_vector.append(minus_bias_enc)
-        Plus_Single_encBias = numpy.array(plus_single_bias_enc_vector)
-        Minus_Single_encBias = numpy.array(minus_single_bias_enc_vector[::-1])
-        #print(time.time()-t2)
-        #t3 = time.time()
-        for outpos in range(Cspan,(end-start+Cspan)):
-            this_plus_single_enc = Plus_Single_encBias[outpos]
-            this_minus_single_enc = Minus_Single_encBias[outpos]
-            this_plus_sum_enc = sum(Plus_Single_encBias[(outpos-Cspan):(outpos+Cspan)])
-            this_minus_sum_enc = sum(Minus_Single_encBias[(outpos-Cspan):(outpos+Cspan)])
+        # calculate biasExpCuts
+        for peakname in mergePeaks:
+            peakinfo = mergePeak_dict[peakname]
+            chrm = peakinfo[0]
+            start = peakinfo[1]
+            end = peakinfo[2]
+            Plus_Single_encBias = thisChrom_plus_bias_dict[peakname]
+            Minus_Single_encBias = thisChrom_minus_bias_dict[peakname]
+            plus_vector = thisChrom_plus_cuts_dict[peakname]
+            minus_vector = thisChrom_minus_cuts_dict[peakname]
 
-            this_plus = plus_vector[outpos]
-            this_minus = minus_vector[outpos]
-            this_plus_cuts_sum = sum(plus_vector[(outpos-Cspan):(outpos+Cspan)])
-            this_minus_cuts_sum = sum(minus_vector[(outpos-Cspan):(outpos+Cspan)])
-
-            out_chrm = chrm
-            out_start = start + outpos - Cspan
-            out_end = out_start+1
-            
-            expcut_plus_enc = this_plus_cuts_sum * (this_plus_single_enc/this_plus_sum_enc)
-            expcut_minus_enc = this_minus_cuts_sum * (this_minus_single_enc/this_minus_sum_enc)
-
-            outf_plus.write("\t".join( map(str, [out_chrm,out_start,out_end,round(expcut_plus_enc,6)] ))+"\n")
-            outf_minus.write("\t".join( map(str, [out_chrm,out_start,out_end,round(expcut_minus_enc,6)] ))+"\n")
+            for outpos in range(Cspan,(end-start+Cspan)):
+                this_plus_single_enc = Plus_Single_encBias[outpos]
+                this_minus_single_enc = Minus_Single_encBias[outpos]
+                this_plus_sum_enc = sum(Plus_Single_encBias[(outpos-Cspan):(outpos+Cspan)])
+                this_minus_sum_enc = sum(Minus_Single_encBias[(outpos-Cspan):(outpos+Cspan)])
+    
+                this_plus = plus_vector[outpos]
+                this_minus = minus_vector[outpos]
+                this_plus_cuts_sum = sum(plus_vector[(outpos-Cspan):(outpos+Cspan)])
+                this_minus_cuts_sum = sum(minus_vector[(outpos-Cspan):(outpos+Cspan)])
+    
+                out_chrm = chrm
+                out_start = start + outpos - Cspan
+                out_end = out_start+1
+                
+                expcut_plus_enc = this_plus_cuts_sum * (this_plus_single_enc/this_plus_sum_enc)
+                expcut_minus_enc = this_minus_cuts_sum * (this_minus_single_enc/this_minus_sum_enc)
+    
+                outf_plus.write("\t".join( map(str, [out_chrm,out_start,out_end,round(expcut_plus_enc,6)] ))+"\n")
+                outf_minus.write("\t".join( map(str, [out_chrm,out_start,out_end,round(expcut_minus_enc,6)] ))+"\n")
     outf_plus.close()
     outf_minus.close()
     inf.close()
 
-def bias_exp_cleavage_ATAC(outname,peakfile,biasMat,kmer,bwsum,bdg2bw,seq_dict):
+
+def bias_exp_cleavage_ATAC(outname,peakfile,biasMat,kmer,bedtools,seq_dict,totalreads,dataformat):
 
     offset=9
     Cspan = 25
     kmer=int(kmer)
     flank = int(kmer/2)
+
+    chromosome_peak_dict = {}
+    plus_cut_dict = {}
+    minus_cut_dict = {}
+    # split merge peak
     inf = open(peakfile)
+    count = 0
+    for line in inf:
+        ll = line.split()
+        chrom = ll[0]
+        count += 1
+        newll = [chrom, int(ll[1]) - Cspan, int(ll[2]) + Cspan, "mergePeak%s"%count]
+        if not chrom in chromosome_peak_dict:
+            chromosome_peak_dict[chrom] = open("%s_mergePeaks.bed"%(chrom),'w')
+            plus_cut_dict[chrom] = open("%s_plusCuts.bed"%(chrom),'w')
+            minus_cut_dict[chrom] = open("%s_minusCuts.bed"%(chrom),'w')
+        chromosome_peak_dict[chrom].write("\t".join(map(str,newll))+"\n")
+    inf.close()
+    for chrom in chromosome_peak_dict.keys():
+        chromosome_peak_dict[chrom].close()
+    # split reads (to plus and minus)
+    inf = open(totalreads)
+    count = 0
+    for line in inf:
+        ll = line.split()
+        chrom = ll[0]
+        if not chrom in chromosome_peak_dict:
+            continue
+        if dataformat == "PE":
+            count += 1
+            newll = [chrom, ll[1] ,int(ll[1])+1, "c%s"%count,".","+"]
+            plus_cut_dict[chrom].write("\t".join(map(str,newll))+"\n")
+            count += 1
+            newll = [chrom, int(ll[2])-1 ,ll[2], "c%s"%count,".","-"]
+            minus_cut_dict[chrom].write("\t".join(map(str,newll))+"\n")
+        else:
+            count += 1
+            if ll[5] == "+":
+                newll = [chrom, ll[1] ,int(ll[1])+1, "c%s"%count,".","+"]
+                plus_cut_dict[chrom].write("\t".join(map(str,newll))+"\n")
+            else:
+                newll = [chrom, int(ll[2])-1 ,ll[2], "c%s"%count,".","-"]
+                minus_cut_dict[chrom].write("\t".join(map(str,newll))+"\n")
+    inf.close()
+    for chrom in chromosome_peak_dict.keys():
+        plus_cut_dict[chrom].close()
+        minus_cut_dict[chrom].close()
+
+
     outf_plus = open(outname + "_biasExpCuts_plus.bdg",'w')
     outf_minus = open(outname + "_biasExpCuts_minus.bdg",'w')
-    for line in inf:
-        ll = line.strip().split("\t")
-        chrm = ll[0]
-        start = int(ll[1])
-        end = int(ll[2])
 
-        if start-Cspan < 0:
-            continue
-        plus_vector = fetchsignal_bw(bwsum, outname+ "_cleavage_plus.bw", chrm,start-Cspan,end+Cspan)
-        minus_vector = fetchsignal_bw(bwsum, outname+ "_cleavage_minus.bw", chrm,start-Cspan,end+Cspan)
-        seqall = seq_dict[chrm][(start-Cspan-flank-offset):(end+Cspan+flank+offset)]#fetchseq_2bit(twoBitFa,seq2bit,chrm,start-Cspan-flank,end+Cspan+flank)
-#        plus_seq_all = fetchseq_2bit(twoBitFa,seq2bit,chrm,start-Cspan-flank,end+Cspan+flank)
-        plus_single_bias_enc_vector = []
-        minus_single_bias_enc_vector = []
-        for pos in range(offset,end-start+2*Cspan+offset):
-            plus_forward_seq = seqall[pos:(pos+kmer)]
-            plus_reverse_seq = rev(seqall[(pos+offset):(pos+kmer+offset)])
-            minus_forward_seq = rev(seqall[(pos+1):(pos+1+kmer)])
-            minus_reverse_seq = seqall[(pos+1-offset):(pos+1+kmer-offset)]
-            if len(plus_forward_seq) == kmer and not "N" in plus_forward_seq:
-                plus_bias = 2**biasMat[plus_forward_seq]
-            else:
-                plus_bias = 1
-            if len(minus_forward_seq) == kmer and not "N" in minus_forward_seq:
-                minus_bias = 2**biasMat[minus_forward_seq]
-            else:
-                minus_bias = 1
-            if len(plus_reverse_seq) == kmer and not "N" in plus_reverse_seq:
-                plus_reverse_bias = 2**biasMat[plus_reverse_seq]
-            else:
-                plus_reverse_bias = 1
-            if len(minus_reverse_seq) == kmer and not "N" in minus_reverse_seq:
-                minus_reverse_bias = 2**biasMat[minus_reverse_seq]
-            else:
-                minus_reverse_bias = 1    
-            plus_cb_bias = numpy.sqrt(plus_bias * plus_reverse_bias ) 
-            minus_cb_bias = numpy.sqrt(minus_bias * minus_reverse_bias)
-            plus_single_bias_enc_vector.append(plus_cb_bias)
-            minus_single_bias_enc_vector.append(minus_cb_bias)
-            
-        Plus_Single_encBias = numpy.array(plus_single_bias_enc_vector)
-        Minus_Single_encBias = numpy.array(minus_single_bias_enc_vector)
+    ### for each chromosome, intersect and calculate cleavage pattern
+    for chrom in chromosome_peak_dict.keys():
+        OVcmd1 = """%s intersect -a %s -b %s -wao > %s """%(bedtools,"%s_mergePeaks.bed"%(chrom), "%s_plusCuts.bed"%(chrom), "%s_plusCutsOnPeak.bed"%(chrom))
+        OVcmd2 = """%s intersect -a %s -b %s -wao > %s """%(bedtools,"%s_mergePeaks.bed"%(chrom), "%s_minusCuts.bed"%(chrom), "%s_minusCutsOnPeak.bed"%(chrom))
+        os.system(OVcmd1)
+        os.system(OVcmd2)
 
-        #print(time.time()-t2)
-        #t3 = time.time()
-        for outpos in range(Cspan,(end-start+Cspan)):
-            this_plus_single_enc = Plus_Single_encBias[outpos]
-            this_minus_single_enc = Minus_Single_encBias[outpos]
-            this_plus_sum_enc = sum(Plus_Single_encBias[(outpos-Cspan):(outpos+Cspan)])
-            this_minus_sum_enc = sum(Minus_Single_encBias[(outpos-Cspan):(outpos+Cspan)])
+        #### readin bias vector
+        mergePeaks = []
+        mergePeak_dict = {}
+        thisChrom_plus_bias_dict = {}
+        thisChrom_minus_bias_dict = {}
+        thisChrom_plus_cuts_dict = {}
+        thisChrom_minus_cuts_dict = {}
+        inf = open("%s_mergePeaks.bed"%(chrom))
+        for line in inf:
+            ll = line.strip().split("\t")
+            chrm = ll[0]
+            start = int(ll[1])
+            end = int(ll[2])
+            peakname = ll[3]
+            plus_single_bias_enc_vector = []
+            minus_single_bias_enc_vector = []
+            seqall = seq_dict[chrm][(start-flank-offset):(end+flank+offset)]#fetchseq_2bit(twoBitFa,seq2bit,chrm,start-Cspan-flank,end+Cspan+flank)
+            for pos in range(offset,end-start+offset):
+                plus_forward_seq = seqall[pos:(pos+kmer)]
+                plus_reverse_seq = rev(seqall[(pos+offset):(pos+kmer+offset)])
+                minus_forward_seq = rev(seqall[(pos+1):(pos+1+kmer)])
+                minus_reverse_seq = seqall[(pos+1-offset):(pos+1+kmer-offset)]
+                if len(plus_forward_seq) == kmer and not "N" in plus_forward_seq:
+                    plus_bias = 2**biasMat[plus_forward_seq]
+                else:
+                    plus_bias = 1
+                if len(minus_forward_seq) == kmer and not "N" in minus_forward_seq:
+                    minus_bias = 2**biasMat[minus_forward_seq]
+                else:
+                    minus_bias = 1
+                if len(plus_reverse_seq) == kmer and not "N" in plus_reverse_seq:
+                    plus_reverse_bias = 2**biasMat[plus_reverse_seq]
+                else:
+                    plus_reverse_bias = 1
+                if len(minus_reverse_seq) == kmer and not "N" in minus_reverse_seq:
+                    minus_reverse_bias = 2**biasMat[minus_reverse_seq]
+                else:
+                    minus_reverse_bias = 1    
+                plus_cb_bias = numpy.sqrt(plus_bias * plus_reverse_bias ) 
+                minus_cb_bias = numpy.sqrt(minus_bias * minus_reverse_bias)
+                plus_single_bias_enc_vector.append(plus_cb_bias)
+                minus_single_bias_enc_vector.append(minus_cb_bias)
+                
+            Plus_Single_encBias = numpy.array(plus_single_bias_enc_vector)
+            Minus_Single_encBias = numpy.array(minus_single_bias_enc_vector)
+            thisChrom_plus_bias_dict[peakname] = Plus_Single_encBias
+            thisChrom_minus_bias_dict[peakname] = Minus_Single_encBias
+            thisChrom_plus_cuts_dict[peakname] = [0]*(end-start)#Plus_Single_encBias
+            thisChrom_minus_cuts_dict[peakname] = [0]*(end-start)#Minus_Single_encBias
+            mergePeaks.append(peakname)
+            mergePeak_dict[peakname] = [chrm,start+Cspan,end-Cspan,peakname]
+        inf.close()
+        ### readin cuts 
+        inf = open("%s_plusCutsOnPeak.bed"%(chrom))
+        for line in inf:        
+            ll = line.strip().split("\t")
+            chrm = ll[0]
+            peak_start = int(ll[1])#+Cspan
+            peak_end = int(ll[2])#-Cspan
+            peakname = ll[3]
+            read_start = int(ll[5])
+            if read_start != -1:
+                relative_pos = read_start - peak_start
+            thisChrom_plus_cuts_dict[peakname][relative_pos] += 1
+        inf.close()
 
-            this_plus = plus_vector[outpos]
-            this_minus = minus_vector[outpos]
-            this_plus_cuts_sum = sum(plus_vector[(outpos-Cspan):(outpos+Cspan)])
-            this_minus_cuts_sum = sum(minus_vector[(outpos-Cspan):(outpos+Cspan)])
+        inf = open("%s_minusCutsOnPeak.bed"%(chrom))
+        for line in inf:        
+            ll = line.strip().split("\t")
+            chrm = ll[0]
+            peak_start = int(ll[1])#+Cspan
+            peak_end = int(ll[2])#-Cspan
+            peakname = ll[3]
+            read_start = int(ll[5])
+            if read_start != -1:
+                relative_pos = read_start - peak_start
+            thisChrom_minus_cuts_dict[peakname][relative_pos] += 1
+        inf.close()
 
-            out_chrm = chrm
-            out_start = start + outpos - Cspan
-            out_end = out_start+1
-            
-            expcut_plus_enc = this_plus_cuts_sum * (this_plus_single_enc/this_plus_sum_enc)
-            expcut_minus_enc = this_minus_cuts_sum * (this_minus_single_enc/this_minus_sum_enc)
+        # calculate biasExpCuts
+        for peakname in mergePeaks:
+            peakinfo = mergePeak_dict[peakname]
+            chrm = peakinfo[0]
+            start = peakinfo[1]
+            end = peakinfo[2]
+            Plus_Single_encBias = thisChrom_plus_bias_dict[peakname]
+            Minus_Single_encBias = thisChrom_minus_bias_dict[peakname]
+            plus_vector = thisChrom_plus_cuts_dict[peakname]
+            minus_vector = thisChrom_minus_cuts_dict[peakname]
 
-            outf_plus.write("\t".join( map(str, [out_chrm,out_start,out_end,round(expcut_plus_enc,6)] ))+"\n")
-            outf_minus.write("\t".join( map(str, [out_chrm,out_start,out_end,round(expcut_minus_enc,6)] ))+"\n")
+            for outpos in range(Cspan,(end-start+Cspan)):
+                this_plus_single_enc = Plus_Single_encBias[outpos]
+                this_minus_single_enc = Minus_Single_encBias[outpos]
+                this_plus_sum_enc = sum(Plus_Single_encBias[(outpos-Cspan):(outpos+Cspan)])
+                this_minus_sum_enc = sum(Minus_Single_encBias[(outpos-Cspan):(outpos+Cspan)])
+    
+                this_plus = plus_vector[outpos]
+                this_minus = minus_vector[outpos]
+                this_plus_cuts_sum = sum(plus_vector[(outpos-Cspan):(outpos+Cspan)])
+                this_minus_cuts_sum = sum(minus_vector[(outpos-Cspan):(outpos+Cspan)])
+    
+                out_chrm = chrm
+                out_start = start + outpos - Cspan
+                out_end = out_start+1
+                
+                expcut_plus_enc = this_plus_cuts_sum * (this_plus_single_enc/this_plus_sum_enc)
+                expcut_minus_enc = this_minus_cuts_sum * (this_minus_single_enc/this_minus_sum_enc)
+    
+                outf_plus.write("\t".join( map(str, [out_chrm,out_start,out_end,round(expcut_plus_enc,6)] ))+"\n")
+                outf_minus.write("\t".join( map(str, [out_chrm,out_start,out_end,round(expcut_minus_enc,6)] ))+"\n")
     outf_plus.close()
     outf_minus.close()
     inf.close()
+  
   
 
 def bias_peakXcell_mat(outname,bedtools,chrom_list, kmer, biasDict, seqDict, usecells, datatype,peakminreads,peakmaxreads):

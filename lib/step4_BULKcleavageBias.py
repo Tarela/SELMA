@@ -28,16 +28,16 @@ from SELMApipe.Utility      import (sp,
 def step4_BULKcleavageBias(conf_dict,logfile):
 
     ### preparing mapping state dict
-    wlog('split fragments to strand specific cleavage sites',logfile)
-    if conf_dict['General']['format'] == "PE":
-        cmdplus = """awk '{OFS="\\t";print $1,$2,$2+1,".",".","+"}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_plus.bed")
-        cmdminus = """awk '{OFS="\\t";print $1,$3-1,$3,".",".","-"}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_minus.bed")
-    else:
-        cmdplus = """awk '{if($6=="+") print $1,$2,$2+1,".",".","+"}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_plus.bed")
-        cmdminus = """awk '{if($6=="-") print $1,$3-1,$3,".",".","-"}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_minus.bed")
-
-    tmplog = sp(cmdplus)
-    tmplog = sp(cmdminus)
+#    wlog('split fragments to strand specific cleavage sites',logfile)
+#    if conf_dict['General']['format'] == "PE":
+#        cmdplus = """awk '{OFS="\t";print $1,$2,$2+1,".",".","+"}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_plus.bed")
+#        cmdminus = """awk '{OFS="\t";print $1,$3-1,$3,".",".","-"}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_minus.bed")
+#    else:
+#        cmdplus = """awk '{OFS="\t";if($6=="+") print $1,$2,$2+1,".",".","+"}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_plus.bed")
+#        cmdminus = """awk '{OFS="\t";if($6=="-") print $1,$3-1,$3,".",".","-"}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_minus.bed")
+#
+#    tmplog = sp(cmdplus)
+#    tmplog = sp(cmdminus)
 
     wlog("remove redundant position from the extended peak file",logfile)
     cmduni = """sort -k 1,1 -k 2,2g -k 3,3g %s | %s merge -i - > %s"""%(conf_dict['results']['peakfile'],conf_dict['General']['bedtools'],conf_dict['General']['outname']+"_summitEXTmerge.bed")
@@ -60,8 +60,8 @@ def step4_BULKcleavageBias(conf_dict,logfile):
                                 conf_dict['options']['kmer'],
                                 conf_dict['General']['bedtools'],
                                 conf_dict['results']['seqdict'],
-                                conf_dict['General']['outname']+"_cleavage_plus.bed",
-                                conf_dict['General']['outname']+"_cleavage_minus.bed")
+                                conf_dict['General']['outname']+"_chromatin.bed",
+                                conf_dict['General']['format'])
     else:
         tmplog = bias_exp_cleavage_ATAC(conf_dict['General']['outname'],
                                 conf_dict['General']['outname']+"_summitEXTmerge.bed",
@@ -69,8 +69,8 @@ def step4_BULKcleavageBias(conf_dict,logfile):
                                 conf_dict['options']['kmer'],
                                 conf_dict['General']['bedtools'],
                                 conf_dict['results']['seqdict'],
-                                conf_dict['General']['outname']+"_cleavage_plus.bed",
-                                conf_dict['General']['outname']+"_cleavage_minus.bed")
+                                conf_dict['General']['outname']+"_chromatin.bed",
+                                conf_dict['General']['format'])
 #
 
     wlog('pile up cleavage sites',logfile)
