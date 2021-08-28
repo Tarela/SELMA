@@ -70,7 +70,7 @@ def step5_SCcellClustering(conf_dict,logfile):
          if conf_dict['General']['scPackage']  == "noTabix":
             wlog("related package (Tabix/bgzip) were not installed, skip single-cell clustering step",logfile)
 
-    elif conf_dict['options']['clustermethod'] == "APEC": 
+    elif conf_dict['options']['clustermethod'].upper() == "APEC": 
         conf_dict['General']['scPackage'] = scClustering_APEC(conf_dict['General']['outname'],
                            conf_dict['options']['lowbiaspeak'],
                            int(conf_dict['options']['UMAP']))
