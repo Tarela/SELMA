@@ -28,16 +28,16 @@ from SELMApipe.Utility      import (sp,
 def step4_BULKcleavageBias(conf_dict,logfile):
 
     ### preparing mapping state dict
-#    wlog('split fragments to strand specific cleavage sites',logfile)
-#    if conf_dict['General']['format'] == "PE":
-#        cmdplus = """awk '{OFS="\t";print $1,$2,$2+1,".",".","+"}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_plus.bed")
-#        cmdminus = """awk '{OFS="\t";print $1,$3-1,$3,".",".","-"}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_minus.bed")
-#    else:
-#        cmdplus = """awk '{OFS="\t";if($6=="+") print $1,$2,$2+1,".",".","+"}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_plus.bed")
-#        cmdminus = """awk '{OFS="\t";if($6=="-") print $1,$3-1,$3,".",".","-"}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_minus.bed")
-#
-#    tmplog = sp(cmdplus)
-#    tmplog = sp(cmdminus)
+    wlog('split fragments to strand specific cleavage sites',logfile)
+    if conf_dict['General']['format'] == "PE":
+        cmdplus = """awk '{OFS="\t";print $1,$2,$2+1,".",".","+"}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_plus.bed")
+        cmdminus = """awk '{OFS="\t";print $1,$3-1,$3,".",".","-"}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_minus.bed")
+    else:
+        cmdplus = """awk '{OFS="\t";if($6=="+") print $1,$2,$2+1,".",".","+"}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_plus.bed")
+        cmdminus = """awk '{OFS="\t";if($6=="-") print $1,$3-1,$3,".",".","-"}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_minus.bed")
+
+    rwlog(cmdplus,logfile)
+    rwlog(cmdminus,logfile)
 
     wlog("remove redundant position from the extended peak file",logfile)
     cmduni = """sort -k 1,1 -k 2,2g -k 3,3g %s | %s merge -i - > %s"""%(conf_dict['results']['peakfile'],conf_dict['General']['bedtools'],conf_dict['General']['outname']+"_summitEXTmerge.bed")
@@ -75,19 +75,19 @@ def step4_BULKcleavageBias(conf_dict,logfile):
 
     wlog('pile up cleavage sites',logfile)
     #pluslog1 = sp("macs3 pileup -i %s -f BED --extsize 1 -o %s "%(conf_dict['General']['outname'] + "_cleavage_plus.bed", conf_dict['General']['outname']+ "_cleavage_plus.bdg"))
-    pluslog1 = sp("%s genomecov -i %s -g %s -bg > %s "%(conf_dict['General']['bedtools'],conf_dict['General']['outname'] + "_cleavage_plus.bed",conf_dict['options']['csize'], conf_dict['General']['outname']+ "_cleavage_plus.bdg"))
-    pluslog2 = sp("sort -k1,1 -k2,2n %s > %s"%(conf_dict['General']['outname']+ "_cleavage_plus.bdg",conf_dict['General']['outname']+ "_cleavage_plus_sorted.bdg" ))
-    pluslog3 = sp("%s %s %s %s"%(conf_dict['General']['bedGraphToBigWig'],conf_dict['General']['outname']+ "_cleavage_plus_sorted.bdg",conf_dict['options']['csize'],conf_dict['General']['outname']+ "_cleavage_plus.bw" ))
+    rwlog("%s genomecov -i %s -g %s -bg > %s "%(conf_dict['General']['bedtools'],conf_dict['General']['outname'] + "_cleavage_plus.bed",conf_dict['options']['csize'], conf_dict['General']['outname']+ "_cleavage_plus.bdg"),logfile)
+    rwlog("sort -k1,1 -k2,2n %s > %s"%(conf_dict['General']['outname']+ "_cleavage_plus.bdg",conf_dict['General']['outname']+ "_cleavage_plus_sorted.bdg" ),logfile)
+    rwlog("%s %s %s %s"%(conf_dict['General']['bedGraphToBigWig'],conf_dict['General']['outname']+ "_cleavage_plus_sorted.bdg",conf_dict['options']['csize'],conf_dict['General']['outname']+ "_cleavage_plus.bw" ),logfile)
     #minuslog1 = sp("macs3 pileup -i %s -f BED --extsize 1 -o %s "%(conf_dict['General']['outname'] + "_cleavage_minus.bed", conf_dict['General']['outname']+ "_cleavage_minus.bdg"))
-    minuslog1 = sp("%s genomecov -i %s -g %s -bg > %s "%(conf_dict['General']['bedtools'],conf_dict['General']['outname'] + "_cleavage_minus.bed",conf_dict['options']['csize'], conf_dict['General']['outname']+ "_cleavage_minus.bdg"))
-    minuslog2 = sp("sort -k1,1 -k2,2n %s > %s"%(conf_dict['General']['outname']+ "_cleavage_minus.bdg",conf_dict['General']['outname']+ "_cleavage_minus_sorted.bdg" ))
-    minuslog3 = sp("%s %s %s %s"%(conf_dict['General']['bedGraphToBigWig'],conf_dict['General']['outname']+ "_cleavage_minus_sorted.bdg",conf_dict['options']['csize'],conf_dict['General']['outname']+ "_cleavage_minus.bw" ))
+    rwlog("%s genomecov -i %s -g %s -bg > %s "%(conf_dict['General']['bedtools'],conf_dict['General']['outname'] + "_cleavage_minus.bed",conf_dict['options']['csize'], conf_dict['General']['outname']+ "_cleavage_minus.bdg"),logfile)
+    rwlog("sort -k1,1 -k2,2n %s > %s"%(conf_dict['General']['outname']+ "_cleavage_minus.bdg",conf_dict['General']['outname']+ "_cleavage_minus_sorted.bdg" ),logfile)
+    rwlog("%s %s %s %s"%(conf_dict['General']['bedGraphToBigWig'],conf_dict['General']['outname']+ "_cleavage_minus_sorted.bdg",conf_dict['options']['csize'],conf_dict['General']['outname']+ "_cleavage_minus.bw" ),logfile)
 
 
-    pluslog = sp("sort -k1,1 -k2,2n %s > %s"%(conf_dict['General']['outname']+ "_biasExpCuts_plus.bdg",conf_dict['General']['outname']+ "_biasExpCuts_plus_sorted.bdg" ))
-    pluslog = sp("%s %s %s %s"%(conf_dict['General']['bedGraphToBigWig'],conf_dict['General']['outname']+ "_biasExpCuts_plus_sorted.bdg",conf_dict['options']['csize'],conf_dict['General']['outname']+ "_biasExpCuts_plus.bw" ))
+    rwlog("sort -k1,1 -k2,2n %s > %s"%(conf_dict['General']['outname']+ "_biasExpCuts_plus.bdg",conf_dict['General']['outname']+ "_biasExpCuts_plus_sorted.bdg" ),logfile)
+    rwlog("%s %s %s %s"%(conf_dict['General']['bedGraphToBigWig'],conf_dict['General']['outname']+ "_biasExpCuts_plus_sorted.bdg",conf_dict['options']['csize'],conf_dict['General']['outname']+ "_biasExpCuts_plus.bw" ),logfile)
 #
-    minuslog = sp("sort -k1,1 -k2,2n %s > %s"%(conf_dict['General']['outname']+ "_biasExpCuts_minus.bdg",conf_dict['General']['outname']+ "_biasExpCuts_minus_sorted.bdg" ))
-    minuslog = sp("%s %s %s %s"%(conf_dict['General']['bedGraphToBigWig'],conf_dict['General']['outname']+ "_biasExpCuts_minus_sorted.bdg",conf_dict['options']['csize'],conf_dict['General']['outname']+ "_biasExpCuts_minus.bw" ))
+    rwlog("sort -k1,1 -k2,2n %s > %s"%(conf_dict['General']['outname']+ "_biasExpCuts_minus.bdg",conf_dict['General']['outname']+ "_biasExpCuts_minus_sorted.bdg" ),logfile)
+    rwlog("%s %s %s %s"%(conf_dict['General']['bedGraphToBigWig'],conf_dict['General']['outname']+ "_biasExpCuts_minus_sorted.bdg",conf_dict['options']['csize'],conf_dict['General']['outname']+ "_biasExpCuts_minus.bw" ),logfile)
     return conf_dict
 

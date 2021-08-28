@@ -213,7 +213,7 @@ if(require("Signac") & require("Seurat") & require("Matrix")){
     else:
         return("yesPackage")
 
-def scClustering_ArchR(outname,GENOME,Percent,topDim,makeUMAP):
+def scClustering_ArchR_Seurat(outname,GENOME,Percent,topDim,makeUMAP):
     cmd1 = """awk '{OFS="\t";print $1,$2,$3,$4,1}' %s_highQcellReads.bed | sort -k 1,1 -k 2,2g -k 3,3g -k 4,4  | bgzip > %s_ArchRReads.bed.gz"""%(outname,outname)
     cmd2 = """tabix -p bed %s_ArchRReads.bed.gz"""%(outname)
     check_bgzip = sp("which bgzip")
@@ -351,6 +351,153 @@ if(require("ArchR")){
         return("noPackage")
     else:
         return("yesPackage")
+
+
+def scClustering_ArchR_scran(outname,GENOME,Percent,topDim,makeUMAP):
+    cmd1 = """awk '{OFS="\t";print $1,$2,$3,$4,1}' %s_highQcellReads.bed | sort -k 1,1 -k 2,2g -k 3,3g -k 4,4  | bgzip > %s_ArchRReads.bed.gz"""%(outname,outname)
+    cmd2 = """tabix -p bed %s_ArchRReads.bed.gz"""%(outname)
+    check_bgzip = sp("which bgzip")
+    check_tabix = sp("which tabix")
+    if check_bgzip[0].decode("ascii") == "" or check_tabix[0].decode("ascii") == "" :
+        return("noPackage")
+
+    tmplog = sp(cmd1)
+    tmplog = sp(cmd2)
+
+    scRscript="""
+if(require("ArchR")){
+  set.seed(1)
+  
+  outname <- "%s"
+  GENOME <- "%s"
+  Percent <- %s
+  topDim <- %s
+  makeUMAP <- %s
+  
+  dir.create(paste0(outname,"_ArchR"))
+  setwd(paste0(outname,"_ArchR"))
+  set.seed(1)
+  addArchRGenome(GENOME)
+  addArchRThreads(threads = 1)
+  
+  getCN <- function(inname){
+      return(strsplit(inname,"#")[[1]][2])
+  }
+  
+  inputFiles <- c(paste0("../",outname,"_ArchRReads.bed.gz"))
+  names(inputFiles)<-c("combine")
+  
+  ArrowFiles <- createArrowFiles(
+    inputFiles = inputFiles,
+    sampleNames = names(inputFiles),
+    minTSS = 0, #Dont set this too high because you can always increase later
+    minFrags = 0, maxFrags=1e+10,
+    addTileMat = F,
+    force=T,
+    addGeneScoreMat = F
+  )
+  
+  proj1 <- ArchRProject(
+    ArrowFiles = ArrowFiles,
+    outputDirectory = outname,
+    copyArrows = FALSE 
+  )
+  
+  regionFeature <- read.table(paste0("../",outname,"_peakFeatures.txt"),row.names=4,header=T)
+  peaknum <- nrow(regionFeature)
+  keep_percent <- as.numeric(Percent)
+  usepeak <- regionFeature[ order(regionFeature[,"avebias"],decreasing=T)[ round(peaknum* (1-keep_percent/100) ) : peaknum ], ]
+  peakdata <- usepeak
+  
+  peakGR <- GRanges(seqnames=peakdata[,1],ranges=IRanges(peakdata[,2],peakdata[,3]))
+  proj1 <- addPeakSet(ArchRProj=proj1, peakSet=peakGR)
+  proj1 <- addPeakMatrix(proj1)
+  
+  proj30 <- addIterativeLSI(
+      ArchRProj = proj1,
+      useMatrix = "PeakMatrix", 
+      name = "IterativeLSI", 
+      iterations = 2, 
+      clusterParams = list( #See Seurat::FindClusters
+          resolution = c(0.2), 
+          sampleCells = length(proj1$cellNames), 
+          n.start = 10
+      ), 
+      varFeatures = peaknum, 
+      dimsToUse = 1:(min(topDim,length(proj1$cellNames))),
+      seed=1,force=T,sampleCellsPre=20000,
+      sampleCellsFinal = 20000,projectCellsPre=F
+  )
+  
+  # clustering
+  proj30_seurat <- addClusters(
+      input = proj30,
+      reducedDims = "IterativeLSI",
+      method = "scran",
+      name = "Clusters",
+      k=15,
+      force=T,seed=1
+  )
+  
+  clusterInfo <- proj30_seurat$Clusters#as.numeric(Ddata$seurat_clusters)
+  names(clusterInfo) <- unlist(lapply(proj30_seurat$cellNames,getCN))
+  outdata <- cbind(names(clusterInfo), clusterInfo)
+  colnames(outdata) <- c("cellname","cluster")
+  write.table(outdata,file=paste0("../",outname,"_scClusters.txt"),row.names=F,col.names=T,sep="\t",quote=F)
+  
+  if(makeUMAP == 1){
+    proj30 <- addUMAP(
+        ArchRProj = proj30, 
+        reducedDims = "IterativeLSI", 
+        name = "UMAP", 
+        nNeighbors = 30, 
+        minDist = 0.5, 
+        metric = "cosine",
+        force=T
+    )
+    umapdata <- proj30@embeddings$UMAP$df
+    rownames(umapdata) <- unlist(lapply(proj30$cellNames,getCN))
+    if(nrow(outdata)<1000){
+      PCH <- 16
+    }else{
+      PCH <- "."
+    }
+    pdf(file=paste0("../",outname,"_clusteringUMAP.pdf"))
+    layout(matrix(c(1,2),nrow=1),width=c(4,1))
+    par(mar=c(4,4,2,1))
+    colorMat <- rep("black",nrow(umapdata))
+    names(colorMat) <- rownames(umapdata)
+    rain <- rainbow(length(sort(unique(clusterInfo))))
+    for(i in seq(sort(unique(clusterInfo)))){
+      ii <- sort(unique(clusterInfo))[i]
+      colorMat[names(clusterInfo)[which(clusterInfo==ii)]] <- rain[i]
+    }
+    plot(umapdata[,1],umapdata[,2],col=colorMat[rownames(umapdata)],pch=PCH,xlab="UMAP-1",ylab="UMAP-2",main=paste0(outname," ArchR UMAP"))
+    par(mar=c(4,1,2,1))
+    plot(1,1,type="n",xlab="",ylab="",main="",axes=F)
+    legend("center",legend=sort(unique(clusterInfo)),col=rain,bty="n",pch=16)
+    dev.off()
+  }
+}else{
+  simpleError("NoInstall")
+}
+
+"""%(outname,GENOME,Percent,topDim,makeUMAP)
+    outf = open(outname+"_scRscript.r",'w')
+    outf.write(scRscript)
+    outf.close()
+    tmplog = sp("Rscript %s_scRscript.r"%outname)    
+    if "simpleError" in tmplog[0].decode("ascii") and "noPackage" in tmplog[0].decode("ascii"):
+        return("noPackage")
+    else:
+        return("yesPackage")
+
+
+
+
+
+
+
 
 def scClustering_APEC(outname,Percent,makeUMAP):
     try:
