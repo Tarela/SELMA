@@ -220,7 +220,10 @@ def scClustering_ArchR_Seurat(outname,GENOME,Percent,topDim,makeUMAP):
     check_tabix = sp("which tabix")
     if check_bgzip[0].decode("ascii") == "" or check_tabix[0].decode("ascii") == "" :
         return("noPackage")
-
+    if os.path.isfile("%s_ArchRReads.bed.gz") and os.path.isfile("%s_ArchRReads.bed.gz"):
+        pass
+    else:
+        return("noTabix")
     tmplog = sp(cmd1)
     tmplog = sp(cmd2)
 
@@ -360,6 +363,10 @@ def scClustering_ArchR_scran(outname,GENOME,Percent,topDim,makeUMAP):
     check_tabix = sp("which tabix")
     if check_bgzip[0].decode("ascii") == "" or check_tabix[0].decode("ascii") == "" :
         return("noPackage")
+    if os.path.isfile("%s_ArchRReads.bed.gz") and os.path.isfile("%s_ArchRReads.bed.gz"):
+        pass
+    else:
+        return("noTabix")
 
     tmplog = sp(cmd1)
     tmplog = sp(cmd2)

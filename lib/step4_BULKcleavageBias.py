@@ -43,12 +43,21 @@ def step4_BULKcleavageBias(conf_dict,logfile):
     cmduni = """sort -k 1,1 -k 2,2g -k 3,3g %s | %s merge -i - > %s"""%(conf_dict['results']['peakfile'],conf_dict['General']['bedtools'],conf_dict['General']['outname']+"_summitEXTmerge.bed")
     tmplog = sp(cmduni)
 
+    used_chrm_list= []
+    inf = open(conf_dict['results']['peakfile'])
+    for line in inf:
+        ll = line.split()
+        if not ll[0] in used_chrm_list:
+            used_chrm_list.append(ll[0])
+    inf.close()
+
     wlog('readin sequence from 2bit',logfile)
     seq_dict = {}
     inf = open(conf_dict['options']['csize']) 
     for line in inf:
         chrm = line.split()[0]
-        seq_dict[chrm] = fetchseq_2bit_chrom(conf_dict['General']['twoBitToFa'],conf_dict['General']['sequence'],chrm)
+        if chrm in used_chrm_list:
+            seq_dict[chrm] = fetchseq_2bit_chrom(conf_dict['General']['twoBitToFa'],conf_dict['General']['sequence'],chrm)
     inf.close()
     conf_dict['results']['seqdict'] = seq_dict
 

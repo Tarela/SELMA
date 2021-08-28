@@ -33,7 +33,7 @@ def step3_callpeak(conf_dict,logfile):
             wlog("obtain < 1000 (%s) external inputted peaks, use macs3 to detect peaks"%conf_dict['QC']['peaknumTotal'],logfile)
             macs3callpeak = 1
         else:
-            wlog("obtain %s peaks from (-p) inputted"%conf_dict['QC']['peaknumTotal'],logfile)
+            wlog("obtain %s peaks from (-p) inputted, extend peak to +/- %sbp from peak center"%(conf_dict['QC']['peaknumTotal'],conf_dict['options']['extend']),logfile)
             macs3callpeak = 0
         
     if macs3callpeak == 1:

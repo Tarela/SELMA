@@ -27,11 +27,21 @@ from SELMApipe.Utility      import (sp,
 def step4_SCpeakbias(conf_dict,logfile):
 
     wlog('readin sequence from 2bit',logfile)
+
+    used_chrm_list= []
+    inf = open(conf_dict['results']['peakfile'])
+    for line in inf:
+        ll = line.split()
+        if not ll[0] in used_chrm_list:
+            used_chrm_list.append(ll[0])
+    inf.close()
+
     seq_dict = {}
     inf = open(conf_dict['options']['csize']) 
     for line in inf:
         chrm = line.split()[0]
-        seq_dict[chrm] = fetchseq_2bit_chrom(conf_dict['General']['twoBitToFa'],conf_dict['General']['sequence'],chrm)
+        if chrm in used_chrm_list:
+          seq_dict[chrm] = fetchseq_2bit_chrom(conf_dict['General']['twoBitToFa'],conf_dict['General']['sequence'],chrm)
     inf.close()
     conf_dict['results']['seqdict'] = seq_dict
 

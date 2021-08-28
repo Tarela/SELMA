@@ -56,6 +56,8 @@ def step5_SCcellClustering(conf_dict,logfile):
                            int(conf_dict['options']['UMAP']))
         if conf_dict['General']['scPackage']  == "noPackage":
             wlog("related package (ArchR) were not installed, skip single-cell clustering step",logfile)
+        if conf_dict['General']['scPackage']  == "noTabix":
+            wlog("related package (Tabix/bgzip) were not installed, skip single-cell clustering step",logfile)
 
     elif conf_dict['options']['clustermethod'].upper() == "SCRAN": 
         conf_dict['General']['scPackage'] = scClustering_ArchR_scran(conf_dict['General']['outname'],
@@ -65,7 +67,9 @@ def step5_SCcellClustering(conf_dict,logfile):
                            int(conf_dict['options']['UMAP']))
         if conf_dict['General']['scPackage']  == "noPackage":
             wlog("ArchR related packages were not installed, skip single-cell clustering step",logfile)
- 
+         if conf_dict['General']['scPackage']  == "noTabix":
+            wlog("related package (Tabix/bgzip) were not installed, skip single-cell clustering step",logfile)
+
     elif conf_dict['options']['clustermethod'] == "APEC": 
         conf_dict['General']['scPackage'] = scClustering_APEC(conf_dict['General']['outname'],
                            conf_dict['options']['lowbiaspeak'],
