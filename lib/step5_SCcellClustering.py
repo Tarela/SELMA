@@ -19,10 +19,12 @@ from SELMApipe.Utility      import (sp,
                                    rwlog,
                                    CMD)
 from SELMApipe.scClustering import (scClustering_PCAkm,
-                          scClustering_Seurat,
-                          scClustering_ArchR,
+                          #scClustering_Seurat,
+                          scClustering_ArchR_Seurat,
                           scClustering_APEC,
-                          scClustering_Cicero)
+                          scClustering_ArchR_scran
+                          )
+                          #scClustering_Cicero)
 # --------------------------
 # main 
 # --------------------------
