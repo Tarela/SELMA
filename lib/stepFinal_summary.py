@@ -75,7 +75,7 @@ def stepFinal_summary(conf_dict,logfile):
         sp("mv %s_biasExpCuts_minus_sorted.bdg %s"%(conf_dict['General']['outname'],tmpresult))
         sp("mv %s_summitEXTmerge.bed %s"%(conf_dict['General']['outname'],tmpresult))
         for chrm in conf_dict['options']['chromosome']:
-            if os.path.isfile("%s_mergePeak.bed"%chrm):
+            if os.path.isfile("%s_mergePeaks.bed"%chrm):
                 sp("mv %s_mergePeaks.bed %s"%(conf_dict['General']['outname'],tmpresult))
                 sp("mv %s_plusCuts.bed %s"%(conf_dict['General']['outname'],tmpresult))
                 sp("mv %s_minusCuts.bed %s"%(conf_dict['General']['outname'],tmpresult))
@@ -87,7 +87,6 @@ def stepFinal_summary(conf_dict,logfile):
         sp("mv %s_tmpSCpeaks.bed %s"%(conf_dict['General']['outname'],tmpresult))
         sp("mv %s_scOVcleavage.bed %s"%(conf_dict['General']['outname'],tmpresult))
         sp("mv %s_scRscript.r %s"%(conf_dict['General']['outname'],tmpresult))
-        sp("mv %s_highQcellReads.bed %s"%(conf_dict['General']['outname'],tmpresult))
         if conf_dict['options']['clustermethod'].upper() == "SEURAT" or conf_dict['options']['clustermethod'].upper() == "SCRAN": 
             sp("mv %s_ArchRReads.bed.gz %s"%(conf_dict['General']['outname'],tmpresult))
             sp("mv %s_ArchRReads.bed.gz.tbi %s"%(conf_dict['General']['outname'],tmpresult))

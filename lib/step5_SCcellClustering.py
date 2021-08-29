@@ -57,7 +57,7 @@ def step5_SCcellClustering(conf_dict,logfile):
         if conf_dict['General']['scPackage']  == "noPackage":
             wlog("related package (ArchR) were not installed, skip single-cell clustering step",logfile)
         if conf_dict['General']['scPackage']  == "noTabix":
-            wlog("related package (Tabix/bgzip) were not installed, skip single-cell clustering step",logfile)
+            wlog("related packages (Tabix/bgzip) were not installed, skip single-cell clustering step",logfile)
 
     elif conf_dict['options']['clustermethod'].upper() == "SCRAN": 
         conf_dict['General']['scPackage'] = scClustering_ArchR_scran(conf_dict['General']['outname'],
@@ -66,16 +66,16 @@ def step5_SCcellClustering(conf_dict,logfile):
                            conf_dict['options']['topDim'],
                            int(conf_dict['options']['UMAP']))
         if conf_dict['General']['scPackage']  == "noPackage":
-            wlog("ArchR related packages were not installed, skip single-cell clustering step",logfile)
+            wlog("related package (ArchR) were not installed, skip single-cell clustering step",logfile)
         if conf_dict['General']['scPackage']  == "noTabix":
-            wlog("related package (Tabix/bgzip) were not installed, skip single-cell clustering step",logfile)
+            wlog("related packages (Tabix/bgzip) were not installed, skip single-cell clustering step",logfile)
 
     elif conf_dict['options']['clustermethod'].upper() == "APEC": 
         conf_dict['General']['scPackage'] = scClustering_APEC(conf_dict['General']['outname'],
                            conf_dict['options']['lowbiaspeak'],
                            int(conf_dict['options']['UMAP']))
         if conf_dict['General']['scPackage']  == "noPackage":
-            wlog("APEC related packages were not installed, skip single-cell clustering step",logfile)
+            wlog("related package (APEC) were not installed, skip single-cell clustering step",logfile)
 
     #elif conf_dict['options']['clustermethod'] == "Cicero": 
     #    conf_dict['General']['scPackage'] = scClustering_Cicero(conf_dict['General']['outname'],
