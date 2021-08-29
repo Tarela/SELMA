@@ -110,9 +110,9 @@ SELMA also provides UMAP/t-SNE visualization for the single-cell clustering anal
 
 2. `NAME_peaks.bed` is the peaks detected from the fragment files (using MACS3). Each peak was extended to a 400bp region centered at the peak summit. 
 
-3. `NAME_cleavage.bw` (bulk mode only) is the genome-wide profile of the 1bp cleavages of DNaseI/Tn5. Plus and minus strand cleavages are also separated to two files (cleavage_plus.bw, cleavage_minus.bw)
+3. `NAME_cleavage.bw` (bulk mode only) is the profile of the 1bp cleavages of DNaseI/Tn5 in the peak regions. Plus and minus strand cleavages are separated to two files (cleavage_plus.bw, cleavage_minus.bw)
 
-4. `NAME_biasExpCuts.bw` is the profile of the bias expected cleavages in the peak regions. Plus and minus strand cleavages are also separated to two files (biasExpCuts_plus.bw, biasExpCuts_minus.bw)
+4. `NAME_biasExpCuts.bw` is the profile of the bias expected cleavages in the peak regions. Plus and minus strand cleavages are separated to two files (biasExpCuts_plus.bw, biasExpCuts_minus.bw)
 
 5. `NAME_peakXcell.txt.gz` (sc mode only) is the peak by cell read count matrix generated from the single-cell analysis. Cells are filtered by the total reads count per cell (default >=10,000 reads). Peaks are filtered based on PBS (default, 2/3 peaks with the lowest PBS are kept). 
 
