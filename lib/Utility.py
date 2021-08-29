@@ -437,6 +437,8 @@ def bias_exp_cleavage_DNase(outname,peakfile,biasMat,kmer,bedtools,seq_dict,tota
 
     outf_plus = open(outname + "_biasExpCuts_plus.bdg",'w')
     outf_minus = open(outname + "_biasExpCuts_minus.bdg",'w')
+    outf_plusCuts = open(outname + "_cleavage_plus.bdg",'w')
+    outf_minusCuts = open(outname + "_cleavage_minus.bdg",'w')
 
     ### for each chromosome, intersect and calculate cleavage pattern
     for chrom in chromosome_peak_dict.keys():
@@ -545,8 +547,12 @@ def bias_exp_cleavage_DNase(outname,peakfile,biasMat,kmer,bedtools,seq_dict,tota
     
                 outf_plus.write("\t".join( map(str, [out_chrm,out_start,out_end,round(expcut_plus_enc,6)] ))+"\n")
                 outf_minus.write("\t".join( map(str, [out_chrm,out_start,out_end,round(expcut_minus_enc,6)] ))+"\n")
+                outf_plusCuts.write("\t".join( map(str, [out_chrm,out_start,out_end,round(this_plus,6)] ))+"\n")
+                outf_minusCuts.write("\t".join( map(str, [out_chrm,out_start,out_end,round(this_minus,6)] ))+"\n")
     outf_plus.close()
     outf_minus.close()
+    outf_plusCuts.close()
+    outf_minusCuts.close()
     inf.close()
 
 
@@ -607,6 +613,8 @@ def bias_exp_cleavage_ATAC(outname,peakfile,biasMat,kmer,bedtools,seq_dict,total
 
     outf_plus = open(outname + "_biasExpCuts_plus.bdg",'w')
     outf_minus = open(outname + "_biasExpCuts_minus.bdg",'w')
+    outf_plusCuts = open(outname + "_cleavage_plus.bdg",'w')
+    outf_minusCuts = open(outname + "_cleavage_minus.bdg",'w')
 
     ### for each chromosome, intersect and calculate cleavage pattern
     for chrom in chromosome_peak_dict.keys():
@@ -725,8 +733,12 @@ def bias_exp_cleavage_ATAC(outname,peakfile,biasMat,kmer,bedtools,seq_dict,total
     
                 outf_plus.write("\t".join( map(str, [out_chrm,out_start,out_end,round(expcut_plus_enc,6)] ))+"\n")
                 outf_minus.write("\t".join( map(str, [out_chrm,out_start,out_end,round(expcut_minus_enc,6)] ))+"\n")
+                outf_plusCuts.write("\t".join( map(str, [out_chrm,out_start,out_end,round(this_plus,6)] ))+"\n")
+                outf_minusCuts.write("\t".join( map(str, [out_chrm,out_start,out_end,round(this_minus,6)] ))+"\n")
     outf_plus.close()
     outf_minus.close()
+    outf_plusCuts.close()
+    outf_minusCuts.close()
     inf.close()
   
   

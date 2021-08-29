@@ -84,17 +84,20 @@ def step4_BULKcleavageBias(conf_dict,logfile):
 
     wlog('pile up cleavage sites',logfile)
     #pluslog1 = sp("macs3 pileup -i %s -f BED --extsize 1 -o %s "%(conf_dict['General']['outname'] + "_cleavage_plus.bed", conf_dict['General']['outname']+ "_cleavage_plus.bdg"))
-    pluslog = sp("%s genomecov -i %s -g %s -bga -scale 1 > %s "%(conf_dict['General']['bedtools'],conf_dict['General']['outname'] + "_cleavage_plus.bed",conf_dict['options']['csize'], conf_dict['General']['outname']+ "_cleavage_plus.bdg"))
+    #pluslog = sp("%s genomecov -i %s -g %s -bga -scale 1 > %s "%(conf_dict['General']['bedtools'],conf_dict['General']['outname'] + "_cleavage_plus.bed",conf_dict['options']['csize'], conf_dict['General']['outname']+ "_cleavage_plus.bdg"))
+    #pluslog = sp("sort -k1,1 -k2,2n %s > %s"%(conf_dict['General']['outname']+ "_cleavage_plus.bdg",conf_dict['General']['outname']+ "_cleavage_plus_sorted.bdg" ))
+    #pluslog = sp("%s %s %s %s"%(conf_dict['General']['bedGraphToBigWig'],conf_dict['General']['outname']+ "_cleavage_plus_sorted.bdg",conf_dict['options']['csize'],conf_dict['General']['outname']+ "_cleavage_plus.bw" ))
+    #minuslog1 = sp("macs3 pileup -i %s -f BED --extsize 1 -o %s "%(conf_dict['General']['outname'] + "_cleavage_minus.bed", conf_dict['General']['outname']+ "_cleavage_minus.bdg"))
+    #minuslog = sp("%s genomecov -i %s -g %s -bga -scale 1 > %s "%(conf_dict['General']['bedtools'],conf_dict['General']['outname'] + "_cleavage_minus.bed",conf_dict['options']['csize'], conf_dict['General']['outname']+ "_cleavage_minus.bdg"))
+    #minuslog = sp("sort -k1,1 -k2,2n %s > %s"%(conf_dict['General']['outname']+ "_cleavage_minus.bdg",conf_dict['General']['outname']+ "_cleavage_minus_sorted.bdg" ))
+    #minuslog = sp("%s %s %s %s"%(conf_dict['General']['bedGraphToBigWig'],conf_dict['General']['outname']+ "_cleavage_minus_sorted.bdg",conf_dict['options']['csize'],conf_dict['General']['outname']+ "_cleavage_minus.bw" ))
     pluslog = sp("sort -k1,1 -k2,2n %s > %s"%(conf_dict['General']['outname']+ "_cleavage_plus.bdg",conf_dict['General']['outname']+ "_cleavage_plus_sorted.bdg" ))
     pluslog = sp("%s %s %s %s"%(conf_dict['General']['bedGraphToBigWig'],conf_dict['General']['outname']+ "_cleavage_plus_sorted.bdg",conf_dict['options']['csize'],conf_dict['General']['outname']+ "_cleavage_plus.bw" ))
-    #minuslog1 = sp("macs3 pileup -i %s -f BED --extsize 1 -o %s "%(conf_dict['General']['outname'] + "_cleavage_minus.bed", conf_dict['General']['outname']+ "_cleavage_minus.bdg"))
-    minuslog = sp("%s genomecov -i %s -g %s -bga -scale 1 > %s "%(conf_dict['General']['bedtools'],conf_dict['General']['outname'] + "_cleavage_minus.bed",conf_dict['options']['csize'], conf_dict['General']['outname']+ "_cleavage_minus.bdg"))
     minuslog = sp("sort -k1,1 -k2,2n %s > %s"%(conf_dict['General']['outname']+ "_cleavage_minus.bdg",conf_dict['General']['outname']+ "_cleavage_minus_sorted.bdg" ))
     minuslog = sp("%s %s %s %s"%(conf_dict['General']['bedGraphToBigWig'],conf_dict['General']['outname']+ "_cleavage_minus_sorted.bdg",conf_dict['options']['csize'],conf_dict['General']['outname']+ "_cleavage_minus.bw" ))
 
     pluslog = sp("sort -k1,1 -k2,2n %s > %s"%(conf_dict['General']['outname']+ "_biasExpCuts_plus.bdg",conf_dict['General']['outname']+ "_biasExpCuts_plus_sorted.bdg" ))
     pluslog = sp("%s %s %s %s"%(conf_dict['General']['bedGraphToBigWig'],conf_dict['General']['outname']+ "_biasExpCuts_plus_sorted.bdg",conf_dict['options']['csize'],conf_dict['General']['outname']+ "_biasExpCuts_plus.bw" ))
-#
     minuslog = sp("sort -k1,1 -k2,2n %s > %s"%(conf_dict['General']['outname']+ "_biasExpCuts_minus.bdg",conf_dict['General']['outname']+ "_biasExpCuts_minus_sorted.bdg" ))
     minuslog = sp("%s %s %s %s"%(conf_dict['General']['bedGraphToBigWig'],conf_dict['General']['outname']+ "_biasExpCuts_minus_sorted.bdg",conf_dict['options']['csize'],conf_dict['General']['outname']+ "_biasExpCuts_minus.bw" ))
     return conf_dict
