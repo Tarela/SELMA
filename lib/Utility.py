@@ -12,16 +12,9 @@ def pdf_name             (input_name)
 def wlog                 (message,logfile)
 def ewlog                (message,logfile)
 def rwlog                (message,logfile)
-def readAnnotation       (annotation)
 def textformat           (inp)
 def createDIR            (dirname)
 def strlatexformat       (instr)
-def strdis               (str1,str2)
-def sample_down_transform_sam (samfile,outbed,sampledownsam,sampledownbed,sample_reads)
-def transform_refgene    (refgene,ttsdis,outname)
-def reform_barcode_fastq (fq,reformtxt,cbL,umiL)
-def combine_reads        (barcodeF,cdsF,utr3F,utr5F,symbolF,ttsdisF,outF,dup_measure)
-def generate_matrix      (refgene,inputbed,ttsdis,qcmatfull,qcmat,expmat,coverGNcutoff,umidis1)
 """
 import subprocess
 import sys
