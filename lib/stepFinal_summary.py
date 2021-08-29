@@ -76,11 +76,11 @@ def stepFinal_summary(conf_dict,logfile):
         sp("mv %s_summitEXTmerge.bed %s"%(conf_dict['General']['outname'],tmpresult))
         for chrm in conf_dict['options']['chromosome']:
             if os.path.isfile("%s_mergePeaks.bed"%chrm):
-                sp("mv %s_mergePeaks.bed %s"%(conf_dict['General']['outname'],tmpresult))
-                sp("mv %s_plusCuts.bed %s"%(conf_dict['General']['outname'],tmpresult))
-                sp("mv %s_minusCuts.bed %s"%(conf_dict['General']['outname'],tmpresult))
-                sp("mv %s_plusCutsOnPeak.bed %s"%(conf_dict['General']['outname'],tmpresult))
-                sp("mv %s_minusCutsOnPeak.bed %s"%(conf_dict['General']['outname'],tmpresult))
+                sp("mv %s_mergePeaks.bed %s"%(chrm,tmpresult))
+                sp("mv %s_plusCuts.bed %s"%(chrm,tmpresult))
+                sp("mv %s_minusCuts.bed %s"%(chrm,tmpresult))
+                sp("mv %s_plusCutsOnPeak.bed %s"%(chrm,tmpresult))
+                sp("mv %s_minusCutsOnPeak.bed %s"%(chrm,tmpresult))
     else:
         sp("mv %s_highQcellReads.bed %s"%(conf_dict['General']['outname'],tmpresult))
         sp("mv %s_tmpSCreads.bed %s"%(conf_dict['General']['outname'],tmpresult))
