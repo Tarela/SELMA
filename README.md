@@ -35,6 +35,7 @@ $ SELMA --help  # If you see help manual, you have successfully installed SELMA
 - Bedtools (Quinlan et al., Bioinformatics. 2010) and UCSC tools (Kuhn et al., Brief Bioinform. 2013) are recommended for data pre-processing. The SELMA package will install both tools automatically if the users does not have them pre-installed in the default PATH. 
 - pdflatex is recommended for generating the summary pdf document. To install pdflatex on macOS, you can download “MacTex” from http://tug.org/cgi-bin/mactex-download/MacTeX.pkg. To install pdflatex on linux, you need to install the texlive package from https://www.tug.org/texlive/. SELMA will generate a .txt version of summary report without pdflatex installed. A .tex file will also be generated for users to make the pdf document later. 
 - Some functions (single-cell clustering) of SELMA requires the related packages pre-installed (see Seciton 4)
+- The installation should be finished in about one minute.
 
 ## 2. Download the genome sequence database
 SELMA requires the genome sequence (in .2bit format) prepared for running. You can download them from the UCSC genome browser or other public domains. 
@@ -126,6 +127,7 @@ We provided the test data for users to test SELMA. The sc/bulk output can also b
 - testing peak file(optional for -p): [`Dropbox`](https://www.dropbox.com/s/a4r3gzux7v72rr9/testpeak.bed) ([backupLink](https://data.cyverse.org/dav-anon/iplant/home/tarela/SELMA/testpeak.bed))
 - output for SELMA **bulk** mode with testing data input: [`Dropbox`](https://www.dropbox.com/sh/x8f29ao73t5ka8a/AADPjRgtgmW0DXJTiPMYWIS-a?dl=0)
 - output for SELMA **sc** mode with testing data input: [`Dropbox`](https://www.dropbox.com/sh/a292670gqfw2uaa/AABijJfJCwIqNm1kW3tak4-da?dl=0) 
+- The SELMA with testing data (e.g., using sc mode) will be finished within 20 minutes.
 
 
 ## 9. Other parameters in the SELMA pipeline
