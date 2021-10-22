@@ -76,16 +76,17 @@ $ SELMA -m bulk -i ${path}/testdata.bed.gz -g hg38 -f PE -o testbulk -t ATAC -s 
 ```
 
 ## 4. Customize target chromatin accessibility (peak) regions (v1.0.1).
-SELMA provides an option (-p) to take user supplied customized peak files as the target chromatin accessibility regions for the SELMA analysis. The required peak file should be in BED format (plain text), have >=4 columns (chrom, start, end, name), and contain >=1000 peaks. This parameter was specifically designed for those who don't want to use MACS3. However, we recommend to use the same dataset (e.g., fragments.bed file) for the peak calling (with any method) to ensure sufficient cleavages/signal on the peak regions. Below is the example with an external/customized peak file:
+SELMA provides an option (-p) to take user supplied customized peak files as the target chromatin accessibility regions for the SELMA analysis. The required peak file should be in BED format (plain text), have >=4 columns (chrom, start, end, name), and contain >=1000 peaks. This parameter was specifically designed for those who don't want to use MACS3. However, we recommend to use the same dataset (e.g., fragments.bed file) for the peak calling (with any method) to ensure sufficient cleavages/signal on the peak regions. Below is the example with an external/customized peak file: <br />
+The test files (testdata.bed.gz and testpeak.bed) in the following cmd lines can be downloaded via the link in section 8
 
 \# sc mode 
 ```sh
-$ SELMA -m sc -i ${path}/testdata.bed.gz -p ${path}/testpeak.bed -g hg38 -f PE -o testsc -t ATAC --clusterMethod PCAkm -s ${path}/hg38.2bit --readCutoff 1000 --bias naked --kmer 10 --UMAP 
+SELMA -m sc -i ${path}/testdata.bed.gz -p ${path}/testpeak.bed -g hg38 -f PE -o testsc -t ATAC --clusterMethod PCAkm -s ${path}/hg38.2bit --readCutoff 1000 --bias naked --kmer 10 --UMAP 
 ```
 
 \# bulk mode 
 ```sh
-$ SELMA -m bulk -i ${path}/testdata.bed.gz -p ${path}/testpeak.bed -g hg38 -f PE -o testbulk -t ATAC -s ${path}/hg38.2bit --bias naked --kmer 10 
+SELMA -m bulk -i ${path}/testdata.bed.gz -p ${path}/testpeak.bed -g hg38 -f PE -o testbulk -t ATAC -s ${path}/hg38.2bit --bias naked --kmer 10 
 ```
 
 ## 5. Pre-processing steps for generating the input fragments file.
@@ -127,7 +128,7 @@ We provided the test data for users to test SELMA. The sc/bulk output can also b
 - testing peak file(optional for -p): [`Dropbox`](https://www.dropbox.com/s/a4r3gzux7v72rr9/testpeak.bed) ([backupLink](https://data.cyverse.org/dav-anon/iplant/home/tarela/SELMA/testpeak.bed))
 - output for SELMA **bulk** mode with testing data input: [`Dropbox`](https://www.dropbox.com/sh/x8f29ao73t5ka8a/AADPjRgtgmW0DXJTiPMYWIS-a?dl=0)
 - output for SELMA **sc** mode with testing data input: [`Dropbox`](https://www.dropbox.com/sh/a292670gqfw2uaa/AABijJfJCwIqNm1kW3tak4-da?dl=0) 
-- The SELMA with testing data (e.g., using sc mode) will be finished within 20 minutes.
+- The SELMA with testing data (e.g., using sc mode) will be finished within 10 minutes.
 
 
 ## 9. Other parameters in the SELMA pipeline

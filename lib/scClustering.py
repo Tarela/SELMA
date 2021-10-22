@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """
+single cell ATAC-seq clustering methods
 """
 import subprocess
 import sys

@@ -26,9 +26,6 @@ from SELMApipe.SimplexEncoding import simplex_encoding
 # --------------------------
 def step2_biasMat(conf_dict,logfile):
 
-    ## readin 2bit seq
-
-
     ### obtain bias mat
     if conf_dict['options']['bias'] == "naked":
         wlog('obtain pre-processed bias matrix from naked DNA data',logfile)

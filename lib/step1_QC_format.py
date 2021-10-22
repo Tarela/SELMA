@@ -26,7 +26,7 @@ from SELMApipe.Utility      import (sp,
 # --------------------------
 def step1_QC_format(conf_dict,logfile):
 
-    ### preparing mapping state dict
+    ### preparing mapping state dict 
     wlog('summarize reads count distribution',logfile)
     chrom_reads = split_chromosome_reads(conf_dict['General']['fragments'],conf_dict['General']['outname'],conf_dict['options']['scATAC10x'],conf_dict['options']['chromosome'])
     if "chrM" in chrom_reads:

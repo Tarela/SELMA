@@ -28,8 +28,6 @@ import time
 # own python modules
 # ------------------------------------
 
-#import SELMA
-
 ### tool function
 from SELMApipe.Utility import (sp,
                     pdf_name,

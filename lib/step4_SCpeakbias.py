@@ -11,8 +11,6 @@ import time
 # --------------------------
 # custom package
 # --------------------------
-
-### tool function
 from SELMApipe.Utility      import (sp,
                                    wlog,
                                    ewlog,

@@ -40,7 +40,7 @@ def step3_callpeak(conf_dict,logfile):
         if conf_dict['General']['macs3'] == "NA":
             ewlog("macs3 was not installed. SELMA requires macs3 installed in the default path ($PATH) for peak calling",logfile)
 
-        ### callpeak
+        ### callpeak 
         if conf_dict['General']['genome'] == "hg38":
             gtag = "hs"
         else:

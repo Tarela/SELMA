@@ -1,20 +1,6 @@
 #!/usr/bin/env python
 """
-
-Function declare:
- 
-def CMD                  (cmd)
-def sp                   (cmd)
-def sperr                (cmd)
-def raise_error          ()
-def detect_memory        ()
-def pdf_name             (input_name)
-def wlog                 (message,logfile)
-def ewlog                (message,logfile)
-def rwlog                (message,logfile)
-def textformat           (inp)
-def createDIR            (dirname)
-def strlatexformat       (instr)
+Utilities used in SELMA pipeline
 """
 import subprocess
 import sys

@@ -27,7 +27,7 @@ from SELMApipe.Utility      import (sp,
 # --------------------------
 def step4_BULKcleavageBias(conf_dict,logfile):
 
-    ### preparing mapping state dict
+    ### preparing mapping state dict 
     wlog('split fragments to strand specific cleavage sites',logfile)
     if conf_dict['General']['format'] == "PE":
         cmdplus = """awk '{OFS="\t";print $1,$2,$2+1,".",".","+"}' %s > %s"""%(conf_dict['General']['outname']+"_chromatin.bed", conf_dict['General']['outname']+"_cleavage_plus.bed")

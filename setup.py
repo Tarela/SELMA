@@ -14,7 +14,6 @@ from distutils.core import setup#, Extension
 import distutils.command.install_lib
 #from setuptools import setup, find_packages
 
-
 def sp(cmd):
     '''
     Call shell cmd or software and return its stdout

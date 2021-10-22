@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 """
-Function declare:
-
+Simplex encoding transformation
 """
 
 import numpy
