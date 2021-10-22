@@ -1,6 +1,12 @@
 # SELMA: a computational framework for modeling intrinsic biases in chromatin accessibility sequencing data
 Genome-wide profiling of chromatin accessibility with the assay for transposase-accessible chromatin using sequencing (ATAC-seq) or DNaseI hypersensitivity sequencing (DNase-seq) has been widely used to identify regulatory DNA elements and transcription factor binding sites. However, enzymatic DNA cleavage exhibits intrinsic sequence biases that confound chromatin accessibility profiling data analysis. Simplex Encoded Linear Model for Accessible Chromatin (SELMA) is a computational method for systematic estimation of intrinsic cleavage biases from ATAC-seq and DNase-seq data. This method can be applied to both bulk and single-cell chromatin accessibility profiles for improved data analysis.
 
+
+![GitHub](https://img.shields.io/github/license/Tarela/SELMA)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/liulab-dfci/MAESTRO)
+[![Build Status](https://travis-ci.com/liulab-dfci/MAESTRO.svg?branch=master)](https://travis-ci.com/liulab-dfci/MAESTRO)
+
+
 ## 0. Introduction of SELMA package
 SELMA performs estimation and correction of intrinsic cleavage bias of DNaseI (DNase-seq) and Tn5 (ATAC-seq) data at both bulk and single-cell levels. SELMA uses DNase/ATAC-seq data from either naked DNA or mitochondrial DNA (mtDNA) to estimate the intrinsic cleavage bias. SELMA provides a series of bias free analysis for the bulk/sc DNase/ATAC-seq data. For bulk data, SELMA estimates the bias expected cleavages on chromatin accessibility regions (peaks) and compares with observed cleavages. For single-cell data, SELMA estimates the summarized bias score on each candidate chromatin accessibility region (peak bias score, PBS) and uses the peaks with low PBS for single-cell clustering analysis.
 
