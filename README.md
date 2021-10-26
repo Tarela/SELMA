@@ -3,8 +3,6 @@ Genome-wide profiling of chromatin accessibility with the assay for transposase-
 
 
 ![GitHub](https://img.shields.io/github/license/Tarela/SELMA)
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/liulab-dfci/MAESTRO)
-[![Build Status](https://travis-ci.com/liulab-dfci/MAESTRO.svg?branch=master)](https://travis-ci.com/liulab-dfci/MAESTRO)
 
 
 ## 0. Introduction of SELMA package
