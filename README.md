@@ -1,9 +1,15 @@
 # SELMA: a computational framework for modeling intrinsic biases in chromatin accessibility sequencing data
 Genome-wide profiling of chromatin accessibility with the assay for transposase-accessible chromatin using sequencing (ATAC-seq) or DNaseI hypersensitivity sequencing (DNase-seq) has been widely used to identify regulatory DNA elements and transcription factor binding sites. However, enzymatic DNA cleavage exhibits intrinsic sequence biases that confound chromatin accessibility profiling data analysis. Simplex Encoded Linear Model for Accessible Chromatin (SELMA) is a computational method for systematic estimation of intrinsic cleavage biases from ATAC-seq and DNase-seq data. This method can be applied to both bulk and single-cell chromatin accessibility profiles for improved data analysis.
 
-
 ![GitHub](https://img.shields.io/github/license/Tarela/SELMA)
+![GitHub](https://img.shields.io/github/v/release/tarela/SELMA)
 ![GitHub](https://img.shields.io/github/commit-activity/m/tarela/SELMA)
+![GitHub](https://img.shields.io/github/repo-size/tarela/SELMA)
+![GitHub](https://img.shields.io/github/last-commit/tarela/SELMA)
+
+[![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)](https://www.python.org/downloads/release/python-360/)
+[![numpy 1.9](https://img.shields.io/badge/numpy-1.9-blue.svg)](https://pypi.org/project/numpy/)
+[![R 3.0](https://img.shields.io/badge/R-3.0-blue.svg)](https://www.r-project.org/)
 
 ## 0. Introduction of SELMA package
 SELMA performs estimation and correction of intrinsic cleavage bias of DNaseI (DNase-seq) and Tn5 (ATAC-seq) data at both bulk and single-cell levels. SELMA uses DNase/ATAC-seq data from either naked DNA or mitochondrial DNA (mtDNA) to estimate the intrinsic cleavage bias. SELMA provides a series of bias free analysis for the bulk/sc DNase/ATAC-seq data. For bulk data, SELMA estimates the bias expected cleavages on chromatin accessibility regions (peaks) and compares with observed cleavages. For single-cell data, SELMA estimates the summarized bias score on each candidate chromatin accessibility region (peak bias score, PBS) and uses the peaks with low PBS for single-cell clustering analysis.
