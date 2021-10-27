@@ -4,8 +4,8 @@ Genome-wide profiling of chromatin accessibility with the assay for transposase-
 ![GitHub](https://img.shields.io/github/license/Tarela/SELMA)
 ![GitHub](https://img.shields.io/github/v/release/tarela/SELMA)
 ![GitHub](https://img.shields.io/github/commit-activity/m/tarela/SELMA)
-![GitHub](https://img.shields.io/github/repo-size/tarela/SELMA)
 ![GitHub](https://img.shields.io/github/last-commit/tarela/SELMA)
+![GitHub](https://img.shields.io/github/repo-size/tarela/SELMA)
 
 [![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)](https://www.python.org/downloads/release/python-360/)
 [![numpy 1.9](https://img.shields.io/badge/numpy-1.9-blue.svg)](https://pypi.org/project/numpy/)
