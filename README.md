@@ -15,6 +15,7 @@ Genome-wide profiling of chromatin accessibility with the assay for transposase-
 SELMA performs estimation and correction of intrinsic cleavage bias of DNaseI (DNase-seq) and Tn5 (ATAC-seq) data at both bulk and single-cell levels. SELMA uses DNase/ATAC-seq data from either naked DNA or mitochondrial DNA (mtDNA) to estimate the intrinsic cleavage bias. SELMA provides a series of bias free analysis for the bulk/sc DNase/ATAC-seq data. For bulk data, SELMA estimates the bias expected cleavages on chromatin accessibility regions (peaks) and compares with observed cleavages. For single-cell data, SELMA estimates the summarized bias score on each candidate chromatin accessibility region (peak bias score, PBS) and uses the peaks with low PBS for single-cell clustering analysis.
 
 - Changelog<br>
+v1.1.0 bias correction model. <br>
 v1.0.2 optimize signal scanning step in bulk mode. <br>
 v1.0.1 update (-p) option for customized peak files.<br>
 v1.0.0 First version of SELMA with both single-cell(sc) and bulk mode.
