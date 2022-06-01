@@ -248,8 +248,6 @@ k-mer & %s  \\\\
         QCdoc += """
 [sc]reads cutoff & %s  \\\\
 \hline
-[sc]lowbias peak percent & %s  \\\\
-\hline
 [sc]peak min reads & %s  \\\\
 \hline
 [sc]peak max reads & %s  \\\\
@@ -259,7 +257,6 @@ k-mer & %s  \\\\
 [sc]cluster methods & %s  \\\\
 \hline
 """%(strlatexformat(conf_dict['options']['readcutoff']),
-     strlatexformat(conf_dict['options']['lowbiaspeak']),
      strlatexformat(conf_dict['options']['peakminreads']),
      strlatexformat(conf_dict['options']['peakmaxreads']),
      strlatexformat(conf_dict['options']['topDim']),
@@ -372,7 +369,7 @@ peakXcell count & %s  \\\\
                 dimRedTerm = "UMAP"
             QCdoc += """sc-cluster %s & %s \\\\
 \hline
-"""%(dimRedTerm,strlatexformat(conf_dict['General']['outname']+"_scClusters.txt"))
+"""%(dimRedTerm,strlatexformat(conf_dict['General']['outname']+"_clusteringUMAP.pdf"))
     QCdoc += """
 \end{tabularx}
 \end{table}
@@ -389,7 +386,7 @@ peakXcell count & %s  \\\\
 \section{%s scatter plot}
 The 2-dim scatter plot represent the %s results. Each dot represents an individual cell and the color represents cluster labels  
 \\begin{figure}[h]
-        \caption{cross-validation curve for lambda decision} \label{fig:profileunion}
+        \caption{UMAP visualization of cells colored by clustering} \label{fig:profileunion}
         \setlength{\\abovecaptionskip}{0pt}
         \setlength{\\belowcaptionskip}{10pt}
         \centering

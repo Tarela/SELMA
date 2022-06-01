@@ -12,7 +12,7 @@ import string
 import gzip
 import numpy
 
-def sp(cmd):
+def sp(cmd): 
     '''
     Call shell cmd or software and return its stdout
     '''
@@ -29,7 +29,7 @@ def sperr(cmd):
     return ac
 
 
-def scClustering_PCAkm(outname,Percent,clusterNum,topDim,makeUMAP):
+def scClustering_PCAkm(outname,Percent,clusterNum,topDim,makeUMAP,SCcorrection):
     scRscript="""
 count_nonZero <- function(inline){
     return(length(which(inline>0)))
@@ -41,62 +41,90 @@ Percent <- %s
 clusterNum <- %s
 topDim <- %s
 makeUMAP <- %s
+SCcorrection <- %s
 
 data <- read.table(paste0(outname,"_peakXcellMat.txt"),row.names=1,header=T)
 regionFeature <- read.table(paste0(outname,"_peakFeatures.txt"),row.names=4,header=T)
 peaknum <- nrow(regionFeature)
 useCell <- colnames(data)
-keep_percent <- as.numeric(Percent)
-usepeak <- regionFeature[ order(regionFeature[,"avebias"],decreasing=T)[ round(peaknum* (1-keep_percent/100) ) : peaknum ], ]
 
-usedata0 <- data[rownames(usepeak),useCell]
+if(SCcorrection == 0){
+  keep_percent <- as.numeric(Percent)
+  usepeak <- regionFeature[ order(regionFeature[,"avebias"],decreasing=T)[ round(peaknum* (1-keep_percent/100) ) : peaknum ], ]
+  usedata0 <- data[rownames(usepeak),useCell]
+  
+}else{
+  x <- ((1:100)-1)/100
+  useY <- 12*(x)*((1-(x))**2)
+
+  usePeak <- regionFeature
+  rawdata <- data[rownames(usePeak)[order(usePeak[,"avebias"])],useCell]
+  correctdata_raw <- c()
+  each <- round(nrow(rawdata)/100)
+  for(i in 0:98){
+          tmp <- rawdata[(each*i+1):(each*(i+1)),]
+          outtmp <- tmp*useY[i+1]
+          correctdata_raw <- rbind(correctdata_raw,outtmp)
+  }
+  i <- 99
+  tmp <- rawdata[(each*i+1):(nrow(rawdata)),]
+  outtmp <- tmp*useY[i+1]
+  correctdata_raw <- rbind(correctdata_raw,outtmp)
+  peak_count_non0 <- apply(correctdata_raw,1,count_nonZero)
+  usedata <- correctdata_raw[which(peak_count_non0>0),]
+  y1raw <- usedata
+  y1scale <- y1raw  * as.numeric(sum(rawdata) / sum(y1raw))
+  y1scaleRound <- round(y1scale)
+  usedata0 <- y1scale
+}
+
 peak_count_non0_row <- apply(usedata0,1,count_nonZero)
 peak_count_non0_col <- apply(usedata0,2,count_nonZero)
-
 usedata <- usedata0[which(peak_count_non0_row>0),which(peak_count_non0_col>0)]
 
-PCAdata_scale <- prcomp(t(scale(usedata)))
-cellname <- as.vector(colnames(usedata))
+PCAdata_scale <- prcomp(t(scale(usedata[sort(rownames(usedata)),sort(colnames(usedata))])))
+cellname <- as.vector(rownames(PCAdata_scale$x))
 CTnum <- clusterNum
 PCAdata_scale_use <- PCAdata_scale$x[,1:min(topDim,ncol(usedata))]
 rownames(PCAdata_scale_use) <- colnames(usedata)
 
+set.seed(1)
 km_use_scale <- kmeans(PCAdata_scale_use, CTnum,iter.max = 100)
 clusterInfo <- km_use_scale$cluster
 
 outdata <- cbind(names(clusterInfo), clusterInfo)
 colnames(outdata) <- c("cellname","cluster")
-write.table(outdata,file=paste0(outname,"_scClusters.txt"),row.names=F,col.names=T,sep="\t",quote=F)
+write.table(outdata[sort(rownames(outdata)),],file=paste0(outname,"_scClusters.txt"),row.names=F,col.names=T,sep="\t",quote=F)
 
 
 if(makeUMAP == 1){
-    if(require("umap")){
-      if(nrow(outdata)<1000){
-        PCH <- 16
-      }else{
-        PCH <- "."
-      }
-      pdf(file=paste0(outname,"_clusteringUMAP.pdf"))
-      layout(matrix(c(1,2),nrow=1),width=c(4,1))
-      par(mar=c(4,4,2,1))
-        umapdata <- umap(PCAdata_scale_use)$layout
-        colorMat <- rep("black",nrow(umapdata))
-        names(colorMat) <- rownames(umapdata)
-        rain <- rainbow(length(sort(unique(clusterInfo))))
-        for(i in sort(unique(clusterInfo))){
-          colorMat[names(clusterInfo)[which(clusterInfo==i)]] <- rain[i]
-        }
-        plot(umapdata[,1],umapdata[,2],col=colorMat[rownames(umapdata)],pch=PCH,xlab="UMAP-1",ylab="UMAP-2",main=paste0(outname," UMAP"))
-      par(mar=c(4,1,2,1))
-      plot(1,1,type="n",xlab="",ylab="",main="",axes=F)
-      legend("center",legend=sort(unique(clusterInfo)),col=rain,bty="n",pch=16)
-      dev.off()        
+  if(require("umap")){
+    if(nrow(outdata)<1000){
+      PCH <- 16
     }else{
-        simpleError("noPackage")
-    }        
+      PCH <- "."
+    }
+    pdf(file=paste0(outname,"_clusteringUMAP.pdf"))
+    layout(matrix(c(1,2),nrow=1),width=c(4,1))
+    par(mar=c(4,4,2,1))
+      umapdata <- umap(PCAdata_scale_use)$layout
+      colorMat <- rep("black",nrow(umapdata))
+      names(colorMat) <- rownames(umapdata)
+      rain <- rainbow(length(sort(unique(clusterInfo))))
+      for(i in sort(unique(clusterInfo))){
+        colorMat[names(clusterInfo)[which(clusterInfo==i)]] <- rain[i]
+      }
+      plot(umapdata[,1],umapdata[,2],col=colorMat[rownames(umapdata)],pch=PCH,xlab="UMAP-1",ylab="UMAP-2",main=paste0(outname," UMAP"))
+    par(mar=c(4,1,2,1))
+    plot(1,1,type="n",xlab="",ylab="",main="",axes=F)
+    legend("center",legend=sort(unique(clusterInfo)),col=rain,bty="n",pch=16)
+    dev.off()        
+  }else{
+      simpleError("noPackage")
+  }        
 }
 
-"""%(outname,Percent,clusterNum,topDim,makeUMAP)
+"""%(outname,Percent,clusterNum,topDim,makeUMAP,SCcorrection)
     outf = open(outname+"_scRscript.r",'w')
     outf.write(scRscript)
     outf.close()
@@ -502,11 +530,6 @@ if(require("ArchR")){
         return("noPackage")
     else:
         return("yesPackage")
-
-
-
-
-
 
 
 

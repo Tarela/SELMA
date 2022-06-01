@@ -43,7 +43,7 @@ $ SELMA --help  # If you see help manual, you have successfully installed SELMA
 
 \# NOTE: 
 - To install SELMA on MacOS, the users need to download and install Command Line Tools beforehand
-- SELMA requires python3 packages [numpy](https://numpy.org) and [MACS3](https://pypi.org/project/MACS3/) pre-installed. See Section 4 if the user does not have MACS3 or uses customized peak file. 
+- SELMA requires python3 packages [numpy](https://numpy.org) and [MACS3(v3.0.0a6)](https://pypi.org/project/MACS3/) pre-installed. See Section 4 if the user does not have MACS3 or uses customized peak file. 
 - Bedtools (Quinlan et al., Bioinformatics. 2010) and UCSC tools (Kuhn et al., Brief Bioinform. 2013) are recommended for data pre-processing. The SELMA package will install both tools automatically if the users does not have them pre-installed in the default PATH. 
 - pdflatex is recommended for generating the summary pdf document. To install pdflatex on macOS, you can download “MacTex” from http://tug.org/cgi-bin/mactex-download/MacTeX.pkg. To install pdflatex on linux, you need to install the texlive package from https://www.tug.org/texlive/. SELMA will generate a .txt version of summary report without pdflatex installed. A .tex file will also be generated for users to make the pdf document later. 
 - Some functions (single-cell clustering) of SELMA requires the related packages pre-installed (see Seciton 4)
@@ -79,7 +79,7 @@ Example of running SELMA with default parameters:
 
 \# sc mode 
 ```sh
-$ SELMA -m sc -i ${path}/testdata.bed.gz -g hg38 -f PE -o testsc -t ATAC --clusterMethod PCAkm -s ${path}/hg38.2bit --readCutoff 1000 --bias naked --kmer 10 --UMAP 
+$ SELMA -m sc -i ${path}/testdata.bed.gz -g hg38 -f PE -o testsc -t ATAC --clusterMethod PCAkm -s ${path}/hg38.2bit --readCutoff 1000 --bias naked --kmer 10 --UMAP --SCcorrection 
 ```
 
 \# bulk mode 
@@ -93,19 +93,19 @@ The test files (testdata.bed.gz and testpeak.bed) in the following cmd lines can
 
 \# sc mode 
 ```sh
-SELMA -m sc -i ${path}/testdata.bed.gz -p ${path}/testpeak.bed -g hg38 -f PE -o testsc -t ATAC --clusterMethod PCAkm -s ${path}/hg38.2bit --readCutoff 1000 --bias naked --kmer 10 --UMAP 
+SELMA -m sc -i ${path}/testdata.bed.gz -p ${path}/testpeak.bed -g hg38 -f PE -o testsc -t ATAC --clusterMethod Kmeans -s ${path}/hg38.2bit --peakQval 0.1 --readCutoff 10000 --bias naked --kmer 10 --UMAP --SCcorrection
 ```
 
 \# bulk mode 
 ```sh
-SELMA -m bulk -i ${path}/testdata.bed.gz -p ${path}/testpeak.bed -g hg38 -f PE -o testbulk -t ATAC -s ${path}/hg38.2bit --bias naked --kmer 10 
+SELMA -m bulk -i ${path}/testdata.bed.gz -p ${path}/testpeak.bed -g hg38 -f PE -o testbulk -t ATAC -s ${path}/hg38.2bit --peakQval 0.1 --readCutoff 10000 --bias naked --kmer 10 
 ```
 
 ## 5. Pre-processing steps for generating the input fragments file.
 SELMA takes aligned fragment files (in .bed format) as input. Users can perform any pre-processing steps to customize the fragments files. For example, keep only high-quality reads with perfect alignment (e.g., MAPQ > 30) to run SELMA. For bulk data, using unique paired-end fragments (unique loci) only can reduce the potential influence from PCR over-amplification. For single-cell data, users can keep only unique fragments in each individual cell.
 
 ## 6. Install and use published single cell clustering methods based on SELMA bias correction. 
-SELMA sc mode implements several cell clustering methods in the single-cell clustering analysis in addition to the default PCA+Kmeans analysis. To activate these methods (name, version and link listed below), users need to install the related package, and specify the method by the --clusterMethod parameter. If a methods is declared by the --clusterMethod parameter but is not installed, SELMA will skip the single-cell clustering analysis.
+SELMA sc mode implements several cell clustering methods in the single-cell clustering analysis in addition to the default Kmeans analysis. To activate these methods (name, version and link listed below), users need to install the related package, and specify the method by the --clusterMethod parameter. If a methods is declared by the --clusterMethod parameter but is not installed, SELMA will skip the single-cell clustering analysis.
 - Seurat (required packages: [ArchR v1.0.1](https://satijalab.org/seurat/), [tabix](http://www.htslib.org/doc/tabix.html), and [bgzip](http://www.htslib.org/doc/bgzip.html))
 - scran (required packages: [ArchR v1.0.1](https://satijalab.org/seurat/), [tabix](http://www.htslib.org/doc/tabix.html), and [bgzip](http://www.htslib.org/doc/bgzip.html))
 - APEC (required package: [APEC v1.2.2](https://github.com/QuKunLab/APEC))
@@ -128,9 +128,9 @@ SELMA also provides UMAP/t-SNE visualization for the single-cell clustering anal
 
 4. `NAME_biasExpCuts.bw` is the profile of the bias expected cleavages in the peak regions. Plus and minus strand cleavages are separated to two files (biasExpCuts_plus.bw, biasExpCuts_minus.bw)
 
-5. `NAME_peakXcell.txt.gz` (sc mode only) is the peak by cell read count matrix generated from the single-cell analysis. Cells are filtered by the total reads count per cell (default >=10,000 reads). Peaks are filtered based on PBS (default, 2/3 peaks with the lowest PBS are kept). 
+5. `NAME_peakXcell.txt.gz` (sc mode only) is the peak by cell read count matrix generated from the single-cell analysis. Cells are filtered by the total reads count per cell (default >=10,000 reads). 
 
-6. `NAME_scClustering.txt.gz` (sc mode only) is the cell clustering result using SELMA-debiased peakset.
+6. `NAME_scClustering.txt.gz` (sc mode only) is the cell clustering result using SELMA bias correction or debiased peakset.
 
 7. `NAME_bias.txt` is the SELMA-estimated bias score matrix. This file will only be generated if users don't use the default parameter (--bias naked) and set --bias chrM to use mtDNA reads for bias estimatation.
 
@@ -139,8 +139,8 @@ We provided the test data for users to test SELMA. The sc/bulk output can also b
 - testing data: [`Dropbox`](https://www.dropbox.com/s/dcgtsgww7jbrpyl/testdata.bed.gz) ([backupLink](https://data.cyverse.org/dav-anon/iplant/home/tarela/SELMA/testdata.bed.gz))
 - testing peak file(optional for -p): [`Dropbox`](https://www.dropbox.com/s/a4r3gzux7v72rr9/testpeak.bed) ([backupLink](https://data.cyverse.org/dav-anon/iplant/home/tarela/SELMA/testpeak.bed))
 - output for SELMA **bulk** mode with testing data input: [`Dropbox`](https://www.dropbox.com/sh/x8f29ao73t5ka8a/AADPjRgtgmW0DXJTiPMYWIS-a?dl=0)
-- output for SELMA **sc** mode with testing data input: [`Dropbox`](https://www.dropbox.com/sh/a292670gqfw2uaa/AABijJfJCwIqNm1kW3tak4-da?dl=0) 
-- The SELMA with testing data (e.g., using sc mode) will be finished within 10 minutes.
+- output for SELMA **sc** mode with testing data input: [`Dropbox`](https://www.dropbox.com/sh/jl7a28w9a984tpz/AACoGYzLRnBwZLgmbGlu6bwSa?dl=0) 
+- The SELMA with testing data (e.g., using sc mode) will be finished within 30 minutes.
 
 
 ## 9. Other parameters in the SELMA pipeline
@@ -151,6 +151,8 @@ You can also set the following parameters for more accurate bias estimation and 
 [optional] Qvalue cutoff in MACS3 peak calling, default is 0.01 (-q 0.01 in MACS3). This parameter is ignored if (-p) is set.
 - -\-bias=BIAS  
 [optional] Bias estimation method, to be selected from naked (default, use SELMA pre-estimated bias score from naked DNA data) or chrM (use mtDNA reads to estimate bias). Naked DNA-generated bias model works fine for human and mouse. Users can consider using the chrM option for other species. 
+- -\-SCcorrection  
+[sc optional] Apply SELMA bias correction model to the scATAC-seq data. 
 - -\-scATAC10x  
 [sc optional] Turn on this parameter to use 10X scATAC mode, in which the data format is assumed to be PE and the 5'end coordinate of each read will be shifted back to represent the actual cleavage sites. If the fragments bed file is directly generated from the 10X Cellranger-atac pipeline, users should set this parameter to ensure that the Tn5 cleavage site are correctly captured. 
 - -\-cellnames=CELLNAMES  
@@ -158,17 +160,17 @@ You can also set the following parameters for more accurate bias estimation and 
 - -\-readCutoff=READCUTOFF  
 [sc optional] Reads number cutoff for high-quality cells. Cells with < 10000(default) reads will be discarded in the analysis. For samples with low sequencing depth, users can change this parameter to include more cells in the analysis. Setting a lower number for this parameter will possibly decrease the accuracy of clustering results due to the low-quality cells. 
 - -\-lowBiasPeak=LOWBIASPEAK  
-[sc optional] Filter peaks based on PBS and keep top% peaks with the lowest PBS for single-cell analysis. Default is 67 (67%, use top 2/3 peaks with lowest PBS). Note that different percentage of lowest PBS peaks will always improve the clustering analysis. 
+[sc optional] Filter peaks based on PBS and keep top% peaks with the lowest PBS for single-cell analysis. Default is 80 (80%, use top 80% peaks with lowest PBS). Note that different percentage of lowest PBS peaks will always improve the clustering analysis. 
 - -\-peakMinReads=PEAKMINREADS  
 [sc optional] Peaks with < 10(default) cleavages covered (across all high-quality cells) will be discarded in the analysis.
 - -\-peakMaxReads=PEAKMAXREADS  
 [sc optional] Peaks with > X cleavages covered (across all high-quality cells) will be discarded in the analysis. Set NA to close this function (default)
 - -\-clusterMethod=CLUSTERMETHOD  
-[sc optional] Method used for single cell clustering analysis. Default is PCAkm(PCA dim reduction + K-means clustering). Optional choices (Seurat,scran, and APEC) require related packages installed (described in section 5)
+[sc optional] Method used for single cell clustering analysis. Default is Kmeans(PCA dim reduction + K-means clustering). Optional choices (Seurat,scran, and APEC) require related packages installed (described in section 5)
 - -\-clusterNum=CLUSTERNUM  
-[sc optional] Number of clusters specified for K-means clustering. Only used for the PCAkm (setting by --clusterMethod) method. If users have no idea approximately how many clusters the sample should have, we suggest to set 7 as default or simply try other optional methods (described in section 5). 
+[sc optional] Number of clusters specified for K-means clustering. Only used for the PCAkm (setting by --clusterMethod) method. Default is 10. 
 - -\-topDim=TOPDIM  
-[sc optional] Number of dimensions (with highest Variance) used for clustering. Only used for PCAkm(PC) and ArchR (Latent variable). This number is suggested to be >=30 (deafult=30)
+[sc optional] Number of dimensions (with highest Variance) used for clustering. Only used for PCAkm(PC) and ArchR (Latent variable). This number is suggested to be >=30 (deafult=60)
 - -\-UMAP  
 [sc optional] Turn on this parameter to generate a UMAP plot for the clustering results
 - -\-overwrite  

@@ -16,7 +16,7 @@ import time
 from SELMApipe.Utility      import (sp,
                                    wlog,
                                    ewlog,
-                                   rwlog,
+                                   rwlog, 
                                    extsummit,
                                    extExternal)
 # --------------------------
@@ -47,9 +47,9 @@ def step3_callpeak(conf_dict,logfile):
             gtag = "mm"
     
         if conf_dict['General']['format'] == "PE":
-            macs3cmd = "macs3 callpeak -t %s -n %s -f BEDPE -g %s -q %s --keep-dup 1"%(conf_dict['General']['outname']+"_chromatin.bed",conf_dict['General']['outname'],gtag,conf_dict['options']['peakqval'])
+            macs3cmd = "macs3 callpeak -t %s -n %s -f BEDPE -g %s -q %s --keep-dup all"%(conf_dict['General']['outname']+"_chromatin.bed",conf_dict['General']['outname'],gtag,conf_dict['options']['peakqval'])
         else:
-            macs3cmd = "macs3 callpeak -t %s -n %s -f BED -g %s -q %s --keep-dup 1 --nomodel --extsize 100"%(conf_dict['General']['outname']+"_chromatin.bed",conf_dict['General']['outname'],gtag,conf_dict['options']['peakqval'])
+            macs3cmd = "macs3 callpeak -t %s -n %s -f BED -g %s -q %s --keep-dup all --nomodel --extsize 100"%(conf_dict['General']['outname']+"_chromatin.bed",conf_dict['General']['outname'],gtag,conf_dict['options']['peakqval'])
     
         wlog("peak calling with macs3: %s"%macs3cmd,logfile)
         peaklog = sp(macs3cmd)

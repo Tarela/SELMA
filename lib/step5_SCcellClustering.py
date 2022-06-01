@@ -30,12 +30,18 @@ from SELMApipe.scClustering import (scClustering_PCAkm,
 def step5_SCcellClustering(conf_dict,logfile):
 
     wlog('single-cell clustering analysis',logfile)
-    if conf_dict['options']['clustermethod'] == "PCAkm":
+    if conf_dict['options']['SCcorrection']:
+        SCcorrection = 1
+    else:
+        SCcorrection = 0  
+    if conf_dict['options']['clustermethod'] == "Kmeans":
         conf_dict['General']['scPackage'] = scClustering_PCAkm(conf_dict['General']['outname'],
                                        conf_dict['options']['lowbiaspeak'],
                                        conf_dict['options']['clusterNum'],
                                        conf_dict['options']['topDim'],
-                                       int(conf_dict['options']['UMAP']))
+                                       int(conf_dict['options']['UMAP']),
+                                       SCcorrection
+                                       )
         if conf_dict['General']['scPackage']  == "noPackage":
             wlog("umap was not installed, UMAP scatter plot will not be generated",logfile)
 
@@ -72,7 +78,8 @@ def step5_SCcellClustering(conf_dict,logfile):
     elif conf_dict['options']['clustermethod'].upper() == "APEC": 
         conf_dict['General']['scPackage'] = scClustering_APEC(conf_dict['General']['outname'],
                            conf_dict['options']['lowbiaspeak'],
-                           int(conf_dict['options']['UMAP']))
+                           int(conf_dict['options']['UMAP']),
+                           SCcorrection)
         if conf_dict['General']['scPackage']  == "noPackage":
             wlog("related package (APEC) were not installed, skip single-cell clustering step",logfile)
 

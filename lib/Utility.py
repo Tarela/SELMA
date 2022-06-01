@@ -13,7 +13,7 @@ import gzip
 import numpy
 
 def CMD(cmd):
-    os.system(cmd)
+    os.system(cmd) 
 
 def sp(cmd):
     '''
@@ -198,8 +198,8 @@ def filter_highQcell_reads(outname,cutoff,usecells):
     if len(usecells) == 0:
         usehighQcells = highQcells
     else:
-        usehighQcells = [value for value in highQcells if value in usecells]
-
+#        usehighQcells = [value for value in highQcells if value in usecells]
+        usehighQcells = [value for value in usecells if value in highQcells]
     if len(usehighQcells) < 100:
         finalcell = highQcells
         usetag = "highQ"
@@ -788,7 +788,7 @@ def bias_peakXcell_mat(outname,bedtools,chrom_list, kmer, biasDict, seqDict, use
                         cell_count[usecells.index(read_info[3])] += 1
             elif this_peak != ll[3]:
                 if cutsSum >= peakminreads and cutsSum <= peakmaxreads:
-                    avebias = round(biasSum / cutsSum,6)
+                    avebias = biasSum / cutsSum#,6)
                     newll =  this_loci + [cutsSum,avebias] 
                     peakFeatures.write("\t".join(map(str,newll))+"\n")
                     newll = [this_peak] + cell_count
@@ -815,7 +815,7 @@ def bias_peakXcell_mat(outname,bedtools,chrom_list, kmer, biasDict, seqDict, use
                         cell_count[usecells.index(read_info[3])] += 1
         
         if cutsSum >= peakminreads and cutsSum <= peakmaxreads:
-            avebias = round(biasSum / cutsSum,6)
+            avebias = biasSum / cutsSum#,6)
             newll =  this_loci + [cutsSum,avebias] 
             peakFeatures.write("\t".join(map(str,newll))+"\n")
             newll = [this_peak] + cell_count

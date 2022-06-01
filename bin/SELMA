@@ -92,26 +92,30 @@ def main():
                          help="[optional] Methods of intrinsic cleavage bias estimation, choose from naked (default, use SELMA pre-estimated bias model from naked DNA data) or chrM (use cleavages on mtDNA to estimate bias)")
     optparser.add_option("--kmer",dest="kmer",type="choice",default='10',choices=('6','8','10'),
                          help="[optional] Length of K (K-mer length), choose from 6,8,and 10(default)")
+    optparser.add_option("--SCcorrection",dest="SCcorrection",default=False, action='store_true', 
+                         help="[sc optional] Apply SELMA bias correction model to the scATAC-seq data.")
+#    optparser.add_option("--SCmodel",dest="SCmodel",type="choice",default="beta1",choices=("linear","normal1","normal2","beta1","beta2","beta3"),
+#                         help="[sc optional] SELMA bias correction model for scATAC-seq data. Choose from linear, normal1, normal2, beta1(default), beta2, or beta3. This parameter is ignored when --SCcorrection is deactivated")
     optparser.add_option("--scATAC10x",dest="scATAC10x",default=False, action='store_true', 
                          help="[sc optional] Turn on this parameter to use 10x scATAC mode, in which the data format is assume to be PE and the reads 5'end will be shift back to represent the cleavage sites  ")
     optparser.add_option("--cellnames",dest="cellnames",type="str",
                          help="[sc optional] Single column file for name list of used individual cells, each line contain the name of the individual cell. This parameter is only used for sc mode")
     optparser.add_option("--readCutoff",dest="readcutoff",type="int",default=10000,
                          help="[sc optional] Reads number cutoff for high quality cells. Cells with < 10000(default) reads will be discarded in the analysis")
-    optparser.add_option("--lowBiasPeak",dest="lowbiaspeak",type="int",default=66,
-                         help="[sc optional] use top% peaks with less bias effect. Default is 66 (66%, use top 2/3 peaks with lowest bias for single-cell analysis).")
+    optparser.add_option("--lowBiasPeak",dest="lowbiaspeak",type="int",default=80,
+                         help="[sc optional] This parameter is ignored/deactivated if --SCcorrection is set. Use top% peaks with less bias effect(lowest peak bias score, PBS). Default is 80 (80%, use top 4/5 peaks with lowest bias for single-cell analysis).")
     optparser.add_option("--peakMinReads",dest="peakminreads",type="str",default="10",
                          help="[sc optional] peaks with < 10(default) cleavages covered will be discarded in the analysis.")
     optparser.add_option("--peakMaxReads",dest="peakmaxreads",type="str",default="NA",
                          help="[sc optional] peaks with > X cleavages covered will be discarded in the analysis. Set NA to close this function (default)")
 #    optparser.add_option("--clusterMethod",dest="clustermethod",type="choice",default="PCAkm",choices=("PCAkm","Seurat","ArchR","APEC","Cicero"),
 #                         help="[sc optional] Method used for single cell clustering analysis. Default is PCAkm(PCA dim reduction + K+means clustering. Optional choices (Seurat,ArchR,APEC,Cicero) require related packages installed")
-    optparser.add_option("--clusterMethod",dest="clustermethod",type="choice",default="PCAkm",choices=("PCAkm","Seurat","APEC","scran"),
-                         help="[sc optional] Method used for single cell clustering analysis. Default is PCAkm(PCA dim reduction + K+means clustering. Optional choices (Seurat,scran,APEC) require related packages installed")
-    optparser.add_option("--clusterNum",dest="clusterNum",type="int",default=7,
-                         help="[sc optional] number of clusters specified for clustering. Only used for PCAkm[clusterMethod] method")
-    optparser.add_option("--topDim",dest="topDim",type="int",default=30,
-                         help="[sc optional] number of dimensions (with highest Variance) used for clustering. Only used for PCAkm(PC) and Seurat (Latent variable). This number is suggested to be >=30 (deafult=30)")
+    optparser.add_option("--clusterMethod",dest="clustermethod",type="choice",default="Kmeans",choices=("Kmeans","Seurat","APEC","scran"),
+                         help="[sc optional] Method used for single cell clustering analysis. Default is Kmeans(PCA dim reduction + K-means clustering. Optional choices (Seurat,scran,APEC) require related packages installed")
+    optparser.add_option("--clusterNum",dest="clusterNum",type="int",default=10,
+                         help="[sc optional] number of clusters specified for clustering(default=10). Only used for PCAkm[clusterMethod] method")
+    optparser.add_option("--topDim",dest="topDim",type="int",default=60,
+                         help="[sc optional] number of dimensions (with highest Variance) used for clustering. Only used for PCAkm(PC) and Seurat/scran (Latent variable). This number is suggested to be >=20 (deafult=60)")
     optparser.add_option("--UMAP",dest="UMAP",default=False, action='store_true', 
                          help="[sc optional] Turn on this parameter to generate a UMAP plot (tSNE for APEC and Cicero) for the clustering results")
     optparser.add_option("--overwrite",dest='fover',  default=False, action='store_true', 
@@ -157,7 +161,6 @@ def main():
     conf_dict['General']['sequence'] = options.sequence
     conf_dict['General']['datatype'] = options.datatype
     conf_dict['General']['outname'] = options.outname
-
     conf_dict['options']['peak'] = options.peak
     conf_dict['options']['extend'] = options.extend
     conf_dict['options']['peakqval'] = options.peakqval
@@ -166,7 +169,8 @@ def main():
     conf_dict['options']['scATAC10x'] = options.scATAC10x
     conf_dict['options']['cellnames'] = options.cellnames
     conf_dict['options']['readcutoff'] = options.readcutoff
-    conf_dict['options']['lowbiaspeak'] = options.lowbiaspeak
+    conf_dict['options']['SCcorrection'] = options.SCcorrection
+    conf_dict['options']['SCmodel'] = "beta1"#options.SCmodel
     conf_dict['options']['peakminreads'] = options.peakminreads
     conf_dict['options']['peakmaxreads'] = options.peakmaxreads
     conf_dict['options']['lowbiaspeak'] = options.lowbiaspeak
