@@ -177,7 +177,7 @@ def main():
     conf_dict['options']['clustermethod'] = options.clustermethod
     conf_dict['options']['clusterNum'] = options.clusterNum    
     conf_dict['options']['topDim'] = options.topDim    
-    conf_dict['options']['UMAP'] = options.UMAP
+    conf_dict['options']['UMAP'] = options.UMAP 
     conf_dict['options']['keeptmp'] = options.keeptmp
     ### read raw path of output dir, the startdir will be used when the input file is not in absolute path
     conf_dict['General']['startdir'] = os.getcwd()+'/'

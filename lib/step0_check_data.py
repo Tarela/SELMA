@@ -17,7 +17,7 @@ import platform
 
 ### tool function
 import SELMApipe
-from SELMApipe.Utility import (sp,
+from SELMApipe.Utility import (sp, 
                     pdf_name,
                     raise_error,
                     wlog,

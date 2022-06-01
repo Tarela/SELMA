@@ -8,7 +8,7 @@ from numpy import linalg as la
 from copy import deepcopy
 
 class encoding(object):
-    def __init__(self):
+    def __init__(self): 
         
         self.mononuc = ['A','C','G','T'] 
         self.dinuc   = ['AA','AC','AG','AT','CA','CC','CG','CT','GA','GC','GG','GT','TA','TC','TG','TT']
