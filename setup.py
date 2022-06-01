@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 """Description
 Setup script for "SELMA: a computational framework for modeling intrinsic biases in chromatin accessibility sequencing data"
-Copyright (c) 2021 Shengen Hu <sh8tv@virginia.edu>
+Copyright (c) 2022 Shengen Hu <sh8tv@virginia.edu>
 This code is free software; you can redistribute it and/or modify it
 under the terms of the Artistic License (see the file COPYING included
 with the distribution).
-"""
+""" 
 import os
 import sys
 import subprocess
