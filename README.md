@@ -79,7 +79,7 @@ Example of running SELMA with default parameters:
 
 \# sc mode 
 ```sh
-$ SELMA -m sc -i ${path}/testdata.bed.gz -g hg38 -f PE -o testsc -t ATAC --clusterMethod PCAkm -s ${path}/hg38.2bit --readCutoff 1000 --bias naked --kmer 10 --UMAP --SCcorrection 
+$ SELMA -m sc -i ${path}/testdata.bed.gz -g hg38 -f PE -o testsc -t ATAC --clusterMethod Kmeans -s ${path}/hg38.2bit --peakQval 0.1 --readCutoff 10000 --bias naked --kmer 10 --UMAP --SCcorrection
 ```
 
 \# bulk mode 
