@@ -100,6 +100,13 @@ def stepFinal_summary(conf_dict,logfile):
         if conf_dict['options']['clustermethod'] == "Cicero":
             sp("mv %s_Cicero %s"%(conf_dict['General']['outname'],tmpresult))
 
+        if conf_dict['options']['SCcorrection']:
+            sp("mv %s_correctionMatRscript.r %s"%(conf_dict['General']['outname'],tmpresult))
+            sp("mv %s_correctionMat.txt %s"%(conf_dict['General']['outname'],tmpresult))
+            sp("mv %s_correctionMatRDreads.bed %s"%(conf_dict['General']['outname'],tmpresult))
+            sp("mv %s_correctionMatPeaks.txt %s"%(conf_dict['General']['outname'],tmpresult))
+
+
     if conf_dict['options']['keeptmp']:
         wlog('--keeptmp was set, keep intermediate results',logfile)
         pass
@@ -262,6 +269,19 @@ k-mer & %s  \\\\
      strlatexformat(conf_dict['options']['topDim']),
      strlatexformat(conf_dict['options']['clustermethod']),
      )
+        if conf_dict['options']['SCcorrection'] :
+            QCdoc += """
+[sc]bias correction & TRUE  \\\\
+\hline
+"""
+        else:
+            QCdoc += """
+[sc]bias correction & FALSE  \\\\
+\hline
+[sc]Percent lowBias peak & %s  \\\\
+\hline
+"""%(conf_dict['options']['lowbiaspeak'])
+       
     QCdoc += """
 \end{tabularx}
 \end{table}
@@ -386,13 +406,13 @@ peakXcell count & %s  \\\\
 \section{%s scatter plot}
 The 2-dim scatter plot represent the %s results. Each dot represents an individual cell and the color represents cluster labels  
 \\begin{figure}[h]
-        \caption{UMAP visualization of cells colored by clustering} \label{fig:profileunion}
+        \caption{%s visualization of cells colored by clustering} \label{fig:profileunion}
         \setlength{\\abovecaptionskip}{0pt}
         \setlength{\\belowcaptionskip}{10pt}
         \centering
         {\includegraphics[width=0.8\\textwidth]{%s}}
 \end{figure}
-"""%(dimRedTerm, dimRedTerm, summarydir + conf_dict['results']['umap'])
+"""%(dimRedTerm, dimRedTerm,dimRedTerm, summarydir + conf_dict['results']['umap'])
 
     QCdoc += """
 \end{document} 

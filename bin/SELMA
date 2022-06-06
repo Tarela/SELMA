@@ -105,9 +105,9 @@ def main():
     optparser.add_option("--lowBiasPeak",dest="lowbiaspeak",type="int",default=80,
                          help="[sc optional] This parameter is ignored/deactivated if --SCcorrection is set. Use top% peaks with less bias effect(lowest peak bias score, PBS). Default is 80 (80%, use top 4/5 peaks with lowest bias for single-cell analysis).")
     optparser.add_option("--peakMinReads",dest="peakminreads",type="str",default="10",
-                         help="[sc optional] peaks with < 10(default) cleavages covered will be discarded in the analysis.")
-    optparser.add_option("--peakMaxReads",dest="peakmaxreads",type="str",default="NA",
-                         help="[sc optional] peaks with > X cleavages covered will be discarded in the analysis. Set NA to close this function (default)")
+                         help="[sc optional] peaks with < 10(default) cleavages covered will be discarded.")
+    optparser.add_option("--peakMaxReads",dest="peakmaxreads",type="str",default="0",
+                         help="[sc optional] peaks with > X cleavages covered will be discarded in the cell clustering analysis. Set 0 to close this function (default)")
 #    optparser.add_option("--clusterMethod",dest="clustermethod",type="choice",default="PCAkm",choices=("PCAkm","Seurat","ArchR","APEC","Cicero"),
 #                         help="[sc optional] Method used for single cell clustering analysis. Default is PCAkm(PCA dim reduction + K+means clustering. Optional choices (Seurat,ArchR,APEC,Cicero) require related packages installed")
     optparser.add_option("--clusterMethod",dest="clustermethod",type="choice",default="Kmeans",choices=("Kmeans","Seurat","APEC","scran"),
@@ -115,7 +115,7 @@ def main():
     optparser.add_option("--clusterNum",dest="clusterNum",type="int",default=10,
                          help="[sc optional] number of clusters specified for clustering(default=10). Only used for PCAkm[clusterMethod] method")
     optparser.add_option("--topDim",dest="topDim",type="int",default=60,
-                         help="[sc optional] number of dimensions (with highest Variance) used for clustering. Only used for PCAkm(PC) and Seurat/scran (Latent variable). This number is suggested to be >=20 (deafult=60)")
+                         help="[sc optional] number of dimensions (with highest Variance) used for clustering. Only used for PCAkm(PC) and Seurat/scran (Latent variable). This number is suggested to be >=30 (deafult=60)")
     optparser.add_option("--UMAP",dest="UMAP",default=False, action='store_true', 
                          help="[sc optional] Turn on this parameter to generate a UMAP plot (tSNE for APEC and Cicero) for the clustering results")
     optparser.add_option("--overwrite",dest='fover',  default=False, action='store_true', 

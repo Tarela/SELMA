@@ -53,8 +53,7 @@ def step4_SCpeakbias(conf_dict,logfile):
                               conf_dict['results']['seqdict'],
                               conf_dict['results']['finalcells'],
                               conf_dict['General']['datatype'],
-                              conf_dict['options']['peakminreads'],
-                              conf_dict['options']['peakmaxreads']
+                              conf_dict['options']['peakminreads']                              
                               )
 
     return conf_dict

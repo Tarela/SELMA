@@ -17,11 +17,14 @@ from SELMApipe.Utility      import (sp,
                                    ewlog,
                                    rwlog,
                                    CMD)
-from SELMApipe.scClustering import (scClustering_PCAkm,
+from SELMApipe.scClustering import (
                           #scClustering_Seurat,
-                          scClustering_ArchR_Seurat,
-                          scClustering_APEC,
-                          scClustering_ArchR_scran
+                          scClustering_correction_matrix,
+                          RDreadloci,
+                          RDreads_correctionMat,
+                          scClustering_PCAkm,
+                          scClustering_ArchR,
+                          scClustering_APEC
                           )
                           #scClustering_Cicero)
 # --------------------------
@@ -39,6 +42,7 @@ def step5_SCcellClustering(conf_dict,logfile):
                                        conf_dict['options']['lowbiaspeak'],
                                        conf_dict['options']['clusterNum'],
                                        conf_dict['options']['topDim'],
+                                       conf_dict['options']['peakmaxreads'],
                                        int(conf_dict['options']['UMAP']),
                                        SCcorrection
                                        )
@@ -53,33 +57,36 @@ def step5_SCcellClustering(conf_dict,logfile):
     #    if conf_dict['General']['scPackage']  == "noPackage":
     #        wlog("Seurat related packages were not installed, skip single-cell clustering step",logfile)
 
-    elif conf_dict['options']['clustermethod'].upper() == "SEURAT": 
-        conf_dict['General']['scPackage'] = scClustering_ArchR_Seurat(conf_dict['General']['outname'],
-                           conf_dict['General']['genome'],
-                           conf_dict['options']['lowbiaspeak'],
-                           conf_dict['options']['topDim'],
-                           int(conf_dict['options']['UMAP']))
-        if conf_dict['General']['scPackage']  == "noPackage":
-            wlog("related package (ArchR) were not installed, skip single-cell clustering step",logfile)
-        if conf_dict['General']['scPackage']  == "noTabix":
-            wlog("related packages (Tabix/bgzip) were not installed, skip single-cell clustering step",logfile)
+    elif conf_dict['options']['clustermethod'].upper() in ["SEURAT","SCRAN"]:
+        if SCcorrection == 1:
+            scClustering_correction_matrix(conf_dict['General']['outname'],
+                                           conf_dict['options']['peakmaxreads'])
+            RDreads_correctionMat(conf_dict['General']['outname'])
 
-    elif conf_dict['options']['clustermethod'].upper() == "SCRAN": 
-        conf_dict['General']['scPackage'] = scClustering_ArchR_scran(conf_dict['General']['outname'],
-                           conf_dict['General']['genome'],
-                           conf_dict['options']['lowbiaspeak'],
-                           conf_dict['options']['topDim'],
-                           int(conf_dict['options']['UMAP']))
+        conf_dict['General']['scPackage'] = scClustering_ArchR(conf_dict['General']['outname'],
+                                                               conf_dict['General']['genome'],
+                                                               conf_dict['options']['lowbiaspeak'],
+                                                               conf_dict['options']['topDim'],
+                                                               conf_dict['options']['peakmaxreads'],
+                                                               SCcorrection,
+                                                               int(conf_dict['options']['UMAP']),
+                                                               conf_dict['options']['clustermethod'].upper())
+
         if conf_dict['General']['scPackage']  == "noPackage":
             wlog("related package (ArchR) were not installed, skip single-cell clustering step",logfile)
         if conf_dict['General']['scPackage']  == "noTabix":
             wlog("related packages (Tabix/bgzip) were not installed, skip single-cell clustering step",logfile)
 
     elif conf_dict['options']['clustermethod'].upper() == "APEC": 
+        if SCcorrection == 1:
+            scClustering_correction_matrix(conf_dict['General']['outname'],
+                                           conf_dict['options']['peakmaxreads'])
+
         conf_dict['General']['scPackage'] = scClustering_APEC(conf_dict['General']['outname'],
-                           conf_dict['options']['lowbiaspeak'],
-                           int(conf_dict['options']['UMAP']),
-                           SCcorrection)
+                                                              conf_dict['options']['lowbiaspeak'],
+                                                              int(conf_dict['options']['UMAP']),
+                                                              int(conf_dict['options']['peakmaxreads']),
+                                                              SCcorrection)
         if conf_dict['General']['scPackage']  == "noPackage":
             wlog("related package (APEC) were not installed, skip single-cell clustering step",logfile)
 

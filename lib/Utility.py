@@ -174,6 +174,7 @@ def split_chromosome_reads(bedfile,outname,scATAC10x,usechrom):
 def filter_highQcell_reads(outname,cutoff,usecells):
 
     cell_reads = {}
+    allcells = []
     inf =open(outname + "_chromatin.bed")
     for line in inf:
         ll = line.strip().split("\t")
@@ -183,10 +184,11 @@ def filter_highQcell_reads(outname,cutoff,usecells):
             continue
         if not cellname in cell_reads:
             cell_reads[cellname]=0
+            allcells.append(cellname)
         cell_reads[cellname] += 1
 
     highQcells = []
-    for cell in cell_reads.keys():
+    for cell in allcells:#cell_reads.keys():
         if cell_reads[cell] >= cutoff:
             highQcells.append(cell)
 
@@ -729,15 +731,15 @@ def bias_exp_cleavage_ATAC(outname,peakfile,biasMat,kmer,bedtools,seq_dict,total
   
   
 
-def bias_peakXcell_mat(outname,bedtools,chrom_list, kmer, biasDict, seqDict, usecells, datatype,peakminreads,peakmaxreads):
+def bias_peakXcell_mat(outname,bedtools,chrom_list, kmer, biasDict, seqDict, usecells, datatype,peakminreads):
 
     flank = int(int(kmer)/2)
     offset=9
     peakminreads = int(peakminreads)
-    if peakmaxreads == "NA":
-        peakmaxreads = int(1e10)
-    else:
-        peakmaxreads = int(peakmaxreads)
+    #if peakmaxreads == "NA":
+    #    peakmaxreads = int(1e10)
+    #else:
+    #    peakmaxreads = int(peakmaxreads)
 
     peakfile = outname + "_summitEXT.bed"
     readfile = outname + "_highQcellReads.bed"
@@ -787,7 +789,7 @@ def bias_peakXcell_mat(outname,bedtools,chrom_list, kmer, biasDict, seqDict, use
                         biasSum += this_bias
                         cell_count[usecells.index(read_info[3])] += 1
             elif this_peak != ll[3]:
-                if cutsSum >= peakminreads and cutsSum <= peakmaxreads:
+                if cutsSum >= peakminreads :#and cutsSum <= peakmaxreads:
                     avebias = biasSum / cutsSum#,6)
                     newll =  this_loci + [cutsSum,avebias] 
                     peakFeatures.write("\t".join(map(str,newll))+"\n")
@@ -814,7 +816,7 @@ def bias_peakXcell_mat(outname,bedtools,chrom_list, kmer, biasDict, seqDict, use
                         biasSum += this_bias
                         cell_count[usecells.index(read_info[3])] += 1
         
-        if cutsSum >= peakminreads and cutsSum <= peakmaxreads:
+        if cutsSum >= peakminreads :#and cutsSum <= peakmaxreads:
             avebias = biasSum / cutsSum#,6)
             newll =  this_loci + [cutsSum,avebias] 
             peakFeatures.write("\t".join(map(str,newll))+"\n")
