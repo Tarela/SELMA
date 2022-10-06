@@ -27,27 +27,27 @@ SELMA requires python3 packages [numpy](https://numpy.org) pre-installed.
 
 It can be installed using conds:
 ```sh
-$ conda create -y -n selma python=3.6
-$ conda activate selma
-$ conda config --env --add channels conda-forge
-$ conda install numpy
-$ git clone https://github.com/Tarela/SELMA.git
+conda create -y -n selma python=3.6
+conda activate selma
+conda config --env --add channels conda-forge
+conda install numpy
+git clone https://github.com/Tarela/SELMA.git
 ```
 
 \# for root user
 ```sh
-$ cd SELMA
-$ sudo python setup.py install  
+cd SELMA
+sudo python setup.py install  
 ```
 \# if you are not root user, you can install SELMA at a specific location where you have write permission
 ```sh
-$ python setup.py install --prefix /home/SELMA  # here you can replace “/home/SELMA” with any location 
-$ export PATH=/home/SELMA/bin:$PATH    # setup PATH for the software
-$ export PYTHONPATH=/home/SELMA/lib/python3.6/site-packages:$PYTHONPATH    # setup PYTHONPATH for module import
+python setup.py install --prefix /home/SELMA  # here you can replace “/home/SELMA” with any location 
+export PATH=/home/SELMA/bin:$PATH    # setup PATH for the software
+export PYTHONPATH=/home/SELMA/lib/python3.6/site-packages:$PYTHONPATH    # setup PYTHONPATH for module import
 ```
 \# To check the SELMA package, just type:
 ```sh
-$ SELMA --help  # If you see help manual, you have successfully installed SELMA
+SELMA --help  # If you see help manual, you have successfully installed SELMA
 ```
 
 \# NOTE: 
