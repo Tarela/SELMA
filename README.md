@@ -90,12 +90,12 @@ Example of running SELMA with default parameters:
 
 \# sc mode 
 ```sh
-$ SELMA -m sc -i ${path}/testdata_reads.bed.gz -g hg38 -f PE -o testsc -t ATAC -s ${path}/hg38.2bit --SCcorrection 
+SELMA -m sc -i ${path}/testdata_reads.bed.gz -g hg38 -f PE -o testsc -t ATAC -s ${path}/hg38.2bit --SCcorrection 
 ```
 
 \# bulk mode 
 ```sh
-$ SELMA -m bulk -i ${path}/testdata_reads.bed.gz -g hg38 -f PE -o testbulk -t ATAC -s ${path}/hg38.2bit
+SELMA -m bulk -i ${path}/testdata_reads.bed.gz -g hg38 -f PE -o testbulk -t ATAC -s ${path}/hg38.2bit
 ```
 
 ## 4. Customize target chromatin accessibility (peak) regions (v1.0.1).
