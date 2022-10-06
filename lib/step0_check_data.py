@@ -191,7 +191,7 @@ def step0_check_data(conf_dict,logfile):
         conf_dict['General']['twobitInfo'] = "twoBitInfo"
     else:
         wlog("twobitInfo(UCSCtools) not installed in the default path, use built-in twobitInfo",logfile)
-        conf_dict['General']['twobitInfo'] = SELMApipe.__path__[0]+"/external_script/%s"%twobit_software
+        conf_dict['General']['twobitInfo'] = SELMApipe.__path__[0]+"/external_script/%s"%twobitI_software
 
     if check_bdg2bw[0].decode("ascii") != "":
         wlog("bedGraphToBigWig(UCSCtools) installed",logfile)

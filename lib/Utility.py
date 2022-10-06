@@ -139,6 +139,7 @@ def checkbedformat(bedfile):
     #return peaknum#"pass"
 
 def split_chromosome_reads(bedfile,outname,scATAC10x,usechrom):
+    usechrom = set(usechrom) # makes 'in' bit faster
     if not bedfile.endswith(".gz"):
         inf = open(bedfile)
     else:
@@ -152,6 +153,7 @@ def split_chromosome_reads(bedfile,outname,scATAC10x,usechrom):
             line = lineRaw.decode("ascii")
         else:
             line = lineRaw
+        # skip header
         if line.startswith("#"):
           continue
         ll = line.strip().split("\t")
