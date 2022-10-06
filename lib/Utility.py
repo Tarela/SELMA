@@ -104,15 +104,21 @@ def rlogonly(cmd,logfile) :
     CMD(cmd)
 
 def checkbedformat(bedfile):
-    if bedfile.endswith(".bed"):
+    if not bedfile.endswith(".gz"):
         inf = open(bedfile)
-        line = inf.readline()
-        inf.close()
+        #line = inf.readline()
+        #inf.close()
     else:
         inf = gzip.open(bedfile,'rb')
-        line = inf.readline().decode("ascii")
-        inf.close()
-
+        #line = inf.readline().decode("ascii")
+        #inf.close()
+    for line in inf:
+      if bedfile.endswith(".gz"):
+        line = line.decode("ascii")
+      if not line.startswith("#"):
+        break
+    
+    inf.close()
     ll = line.strip().split("\t")
     if len(ll) < 3:
         return "fail"
@@ -133,7 +139,7 @@ def checkbedformat(bedfile):
     #return peaknum#"pass"
 
 def split_chromosome_reads(bedfile,outname,scATAC10x,usechrom):
-    if bedfile.endswith(".bed"):
+    if not bedfile.endswith(".gz"):
         inf = open(bedfile)
     else:
         inf = gzip.open(bedfile,'rb')
@@ -142,10 +148,12 @@ def split_chromosome_reads(bedfile,outname,scATAC10x,usechrom):
 
     chrom_reads = {}
     for lineRaw in inf:
-        if bedfile.endswith(".bed.gz"):
+        if bedfile.endswith(".gz"):
             line = lineRaw.decode("ascii")
         else:
             line = lineRaw
+        if line.startswith("#"):
+          continue
         ll = line.strip().split("\t")
         chrom=ll[0]
         if not chrom in usechrom:

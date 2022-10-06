@@ -22,8 +22,17 @@ v1.0.0 First version of SELMA with both single-cell(sc) and bulk mode.
 
 ## 1. Installation
 - Package requirements<br>
-SELMA requires [python](https://www.python.org) 3.6+ and [Rscript](https://www.r-project.org) v3+ to run.<br>
+SELMA requires [python](https://www.python.org) 3.6 and [Rscript](https://www.r-project.org) v3+ to run.<br>
 SELMA requires python3 packages [numpy](https://numpy.org) pre-installed.
+
+It can be installed using conds:
+```sh
+$ conda create -y -n selma python=3.6
+$ conda activate selma
+$ conda config --env --add channels conda-forge
+$ conda install numpy
+$ git clone https://github.com/Tarela/SELMA.git
+```
 
 \# for root user
 ```sh

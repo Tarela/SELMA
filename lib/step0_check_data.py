@@ -51,7 +51,7 @@ def step0_check_data(conf_dict,logfile):
         conf_dict['General']['fragments'] = conf_dict['General']['startdir'] + conf_dict['General']['fragments']
     if not os.path.isfile(conf_dict['General']['fragments']):
         ewlog("fragments file %s not found"%(conf_dict['General']['fragments']),logfile)
-    if not conf_dict['General']['fragments'].endswith('.bed') and not conf_dict['General']['fragments'].endswith('.bed.gz'):
+    if not conf_dict['General']['fragments'].endswith('.bed') and not conf_dict['General']['fragments'].endswith('.bed.gz') and not conf_dict['General']['fragments'].endswith('.tsv') and not conf_dict['General']['fragments'].endswith('.tsv.gz'):
         ewlog('extenion of fragments file is not .bed (nor .bed.gz)',logfile)
     checkbed = checkbedformat(conf_dict['General']['fragments'])
     if checkbed == "fail":
